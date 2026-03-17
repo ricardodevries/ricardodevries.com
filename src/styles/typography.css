@@ -1,15 +1,3 @@
-@font-face {
-  font-family: "Mono Lisa";
-  font-style: italic;
-  src: url("/fonts/MonoLisaVariableItalic.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "Mono Lisa";
-  font-style: normal;
-  src: url("/fonts/MonoLisaVariableNormal.woff2") format("woff2");
-}
-
 .as-h1,
 h1 {
   font-size: 2em;
@@ -88,7 +76,7 @@ pre,
 samp,
 kbd,
 code {
-  font-family: Mono Lisa, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+  font-family: var(--font-mono-lisa), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     Liberation Mono, Courier New, monospace;
   font-variant-ligatures: no-contextual common-ligatures;
   font-variation-settings: normal;
@@ -101,7 +89,7 @@ code {
 }
 
 .font-mono {
-  font-family: Mono Lisa, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+  font-family: var(--font-mono-lisa), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     Liberation Mono, Courier New, monospace;
 }
 
