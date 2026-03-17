@@ -2,6 +2,7 @@
 import "../styles/refined.css";
 import Footer from "@/components/Footer.astro";
 
+import { Font } from "astro:assets";
 import { ClientRouter } from "astro:transitions";
 interface Props {
   title: string;
@@ -90,12 +91,9 @@ const desc = metaDescription ?? description ?? null;
     {desc && <meta property="twitter:description" content={desc} />}
     <meta property="twitter:image" content={ogImg} />
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.bunny.net" />
-    <link
-      href="https://fonts.bunny.net/css?family=ibm-plex-sans:400,400i,500i,600|jetbrains-mono:400,400i"
-      rel="stylesheet"
-    />
+    <Font cssVariable="--font-ibm-plex-sans" preload />
+    <Font cssVariable="--font-mono-lisa" preload />
+
     <title>{prefixedTitle}</title>
     <ClientRouter />
   </head>
