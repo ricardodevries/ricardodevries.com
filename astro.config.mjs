@@ -1,8 +1,8 @@
-import { defineConfig, squooshImageService } from "astro/config";
+import { defineConfig } from "astro/config";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import svelte from "@astrojs/svelte";
-import vercel from "@astrojs/vercel/serverless";
+import node from "@astrojs/node";
 import { rehypePlugins, remarkPlugins } from "./config/plugins";
 import db from "@astrojs/db";
 
@@ -10,14 +10,9 @@ import db from "@astrojs/db";
 export default defineConfig({
   site: "https://vorillaz.com",
   prefetch: true,
-  image: {
-    service: squooshImageService(),
-  },
   markdown: {
     smartypants: true,
-    drafts: true,
     syntaxHighlight: false,
-    extendDefaultPlugins: true,
     rehypePlugins,
     remarkPlugins,
   },
@@ -28,5 +23,7 @@ export default defineConfig({
     },
   },
   output: "server",
-  adapter: vercel(),
+  adapter: node({
+    mode: "standalone",
+  }),
 });

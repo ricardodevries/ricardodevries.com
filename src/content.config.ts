@@ -1,6 +1,9 @@
-import { defineCollection, z } from "astro:content";
+import { defineCollection } from "astro:content";
+import { z } from "astro/zod";
+import { glob } from "astro/loaders";
 
 const talks = defineCollection({
+  loader: glob({ base: "src/content/talks", pattern: "**/*.{md,mdx,yaml,json}" }),
   schema: z.object({
     title: z.string(),
     country: z.string(),
@@ -18,6 +21,7 @@ const talks = defineCollection({
 });
 
 const generative = defineCollection({
+  loader: glob({ base: "src/content/generative", pattern: "**/*.{md,mdx}" }),
   schema: z.object({
     title: z.string(),
     status: z.enum(["draft", "published"]).optional(),
@@ -45,7 +49,7 @@ const generative = defineCollection({
 });
 
 const blog = defineCollection({
-  // Type-check frontmatter using a schema
+  loader: glob({ base: "src/content/blog", pattern: "**/*.{md,mdx}" }),
   schema: z.object({
     title: z.string(),
     description: z.string(),
@@ -62,8 +66,6 @@ const blog = defineCollection({
         url: z.string().optional(),
       })
       .optional(),
-
-    // Transform string to Date object
     pubDate: z
       .string()
       .or(z.date())
@@ -75,7 +77,8 @@ const blog = defineCollection({
   }),
 });
 
-const category = defineCollection({
+const categories = defineCollection({
+  loader: glob({ base: "src/content/categories", pattern: "**/*.{md,mdx,yaml,json}" }),
   schema: z.object({
     title: z.string(),
     description: z.string(),
@@ -84,4 +87,4 @@ const category = defineCollection({
   }),
 });
 
-export const collections = { blog, generative, talks, category };
+export const collections = { blog, generative, talks, categories };

@@ -1,7 +1,7 @@
 <script>
-  export let slug;
+  export let id;
   const fetchImage = (async () => {
-    const response = await fetch("/api/views?" + new URLSearchParams({ slug }));
+    const response = await fetch("/api/views?" + new URLSearchParams({ id }));
     return await response.json();
   })();
 </script>

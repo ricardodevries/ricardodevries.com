@@ -1,12 +1,12 @@
 ---
 import { getLatestPost } from "@/lib/posts";
 const post = await getLatestPost();
-const { slug, data } = post;
+const { id, data } = post;
 ---
 
 <span>
   <span>My latest post is </span>
-  <a class="big-link" data-astro-prefetch href={slug}>{data?.title}</a>
+  <a class="big-link" data-astro-prefetch href={id}>{data?.title}</a>
   and while you're here, you can check some <a class="big-link" href="/art">
     visuals I made
   </a>.

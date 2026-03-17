@@ -18,10 +18,10 @@ export async function getCategories() {
   return categories;
 }
 
-export async function getCategory(slug: string) {
+export async function getCategory(id: string) {
   const categories = await getCollection("categories");
 
-  const category = categories.find((category) => category.slug === slug);
+  const category = categories.find((category) => category.id === id);
   return category;
 }
 

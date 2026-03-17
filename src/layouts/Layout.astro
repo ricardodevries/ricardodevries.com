@@ -2,7 +2,7 @@
 import "../styles/refined.css";
 import Footer from "@/components/Footer.astro";
 
-import { ViewTransitions } from "astro:transitions";
+import { ClientRouter } from "astro:transitions";
 interface Props {
   title: string;
   description?: string;
@@ -97,7 +97,7 @@ const desc = metaDescription ?? description ?? null;
       rel="stylesheet"
     />
     <title>{prefixedTitle}</title>
-    <ViewTransitions />
+    <ClientRouter />
   </head>
   <body>
     <div class="page">

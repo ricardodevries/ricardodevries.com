@@ -5,9 +5,9 @@ export const GET: APIRoute = async ({ request }) => {
   const url = new URL(request.url);
   const params = new URLSearchParams(url.search);
 
-  const slug = params.get("slug");
+  const id = params.get("id");
 
-  if (!slug) {
+  if (!id) {
     return new Response("Not found", { status: 404 });
   }
 
@@ -18,27 +18,27 @@ export const GET: APIRoute = async ({ request }) => {
         count: Views.count,
       })
       .from(Views)
-      .where(eq(Views.slug, slug));
+      .where(eq(Views.id, id));
 
     item = await db
       .insert(Views)
       .values({
-        slug: slug,
+        id: id,
         count: 1,
       })
       .onConflictDoUpdate({
-        target: Views.slug,
+        target: Views.id,
         set: {
           count: sql`count + 1`,
         },
       })
       .returning({
-        slug: Views.slug,
+        id: Views.id,
         count: Views.count,
       })
       .then((res) => res[0]);
   } catch (error) {
-    item = { slug, count: 1 };
+    item = { id, count: 1 };
   }
 
   return new Response(

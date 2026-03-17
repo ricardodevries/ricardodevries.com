@@ -16,7 +16,7 @@ export async function getStaticPaths() {
   );
 
   const postResult = posts.map((post) => ({
-    params: { slug: post.slug },
+    params: { slug: post.id },
     props: { post },
   }));
 
@@ -26,7 +26,7 @@ export async function getStaticPaths() {
   );
 
   const artResult = art.map((art) => ({
-    params: { slug: art?.data?.path ?? art.slug },
+    params: { slug: art?.data?.path ?? art.id },
     props: { generative: art },
   }));
 

@@ -2,7 +2,7 @@ import { defineDb, defineTable, column } from "astro:db";
 
 const Views = defineTable({
   columns: {
-    slug: column.text({ primaryKey: true }),
+    id: column.text({ primaryKey: true }),
     count: column.number({
       default: 1,
     }),

@@ -13,9 +13,12 @@ export const GET: APIRoute = async ({ request }) => {
   const { title } = data;
 
   return new Response(
-    await ogImage({
-      title: title as string,
-    }),
+    new Uint8Array(
+      await ogImage({
+        title: title as string,
+        origin: url.origin,
+      })
+    ),
     {
       headers: { "Content-Type": "image/png" },
     }

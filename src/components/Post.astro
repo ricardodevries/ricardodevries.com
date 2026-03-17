@@ -1,5 +1,5 @@
 ---
-import type { CollectionEntry } from "astro:content";
+import { render, type CollectionEntry } from "astro:content";
 import { slugify } from "@/lib/utils";
 import PostLayout from "@/layouts/PostLayout.astro";
 import Note from "./Note.astro";
@@ -13,7 +13,7 @@ export interface Props {
   post: CollectionEntry<"blog">;
 }
 const { post } = Astro.props;
-const { Content } = await post.render();
+const { Content } = await render(post);
 const {
   title,
   heroImage,
@@ -69,7 +69,7 @@ const updatedstr = updatedDate?.toISOString();
             </span>
           )
         }
-        <PostViews slug={post.slug} />
+        <PostViews id={post.id} />
       </div>
       {
         prompt && heroImageGenerator && (
