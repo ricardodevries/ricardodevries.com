@@ -1,4 +1,4 @@
-export default ({ title = "Welcome" }: { title: string }) => {
+export default ({ title = "Welcome", siteName = "" }: { title: string; siteName: string }) => {
   return (
     <div
       style={{
@@ -66,7 +66,7 @@ export default ({ title = "Welcome" }: { title: string }) => {
                 marginBottom: "10px",
               }}
             >
-              vorillaz.com
+              {siteName}
             </div>
             <div
               style={{
