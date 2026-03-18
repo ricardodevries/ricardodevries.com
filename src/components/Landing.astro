@@ -1,6 +1,5 @@
 ---
 import LatestPost from "./LatestPost.astro";
-import Playing from "./Playing.svelte";
 ---
 
 <div class="wrap">
@@ -29,15 +28,5 @@ import Playing from "./Playing.svelte";
     <h2 class="faded relaxed">
       <LatestPost />
     </h2>
-    <h2 class="faded relaxed">
-      <Playing client:only />
-    </h2>
   </div>
 </div>
-
-<style>
-  /* tiny override */
-  h2 + h2 {
-    margin-top: calc(var(--gap));
-  }
-</style>
