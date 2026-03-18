@@ -4,9 +4,6 @@
 
 interface ImportMetaEnv {
   readonly SANITY: string;
-  readonly SPOTIFY_CLIENT_ID: string;
-  readonly SPOTIFY_CLIENT_ID: string;
-  readonly SPOTIFY_CLIENT_ID: string;
 }
 
 interface ImportMeta {
