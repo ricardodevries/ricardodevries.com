@@ -84,28 +84,6 @@
   --shiki-tabs-text: #fff;
 }
 
-[data-theme="js"] {
-  --select: rgba(35, 98, 209, 0.5);
-  --text: #000;
-  --bg: #fddb29;
-  --code-border: rgba(33, 33, 33, 0.4);
-  --subfaded-text: rgba(0, 0, 0, 0.8);
-  --faded-text: rgba(0, 0, 0, 0.51);
-  --faded-line: rgba(0, 0, 0, 0.2);
-  --faded-bg: rgba(0, 0, 0, 0.06);
-
-  --shiki-color-text: #000;
-  --shiki-token-constant: #050a30;
-  --shiki-token-string: #000000;
-  --shiki-token-comment: #050a30;
-  --shiki-token-keyword: #050a30;
-  --shiki-token-parameter: #050a30;
-  --shiki-token-function: #050a30;
-  --shiki-token-string-expression: #050a30;
-  --shiki-token-punctuation: #050a30;
-  --shiki-token-link: #050a30;
-}
-
 .bg-text {
   background-color: var(--text);
 }
