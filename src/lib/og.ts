@@ -19,9 +19,11 @@ async function fetchFontBuffer(
 export async function ogImage({
   title,
   origin,
+  siteName,
 }: {
   title: string;
   origin: string;
+  siteName: string;
 }) {
   const ibmPlexVariants = fontData["--font-ibm-plex-sans"];
 
@@ -60,7 +62,7 @@ export async function ogImage({
     ],
   };
 
-  const svg = await satori(ogTemplate({ title }), options);
+  const svg = await satori(ogTemplate({ title, siteName }), options);
 
   return svgBufferToPngBuffer(svg);
 }

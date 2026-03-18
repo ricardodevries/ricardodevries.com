@@ -34,7 +34,8 @@ const params = new URLSearchParams({
 const ogImg = new URL("og.png?" + params, Astro.url.origin).href;
 
 // Add the title and description to the social image url
-const prefixedTitle = title ? `${title} | vorillaz.com` : "vorillaz.com";
+const siteName = Astro.site?.hostname;
+const prefixedTitle = title ? `${title} | ${siteName}` : siteName;
 const desc = metaDescription ?? description ?? null;
 ---
 

@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { ogImage } from "@/lib/og";
 
-export const GET: APIRoute = async ({ request }) => {
+export const GET: APIRoute = async ({ request, site }) => {
   // Get the title and description from the query params
   const url = new URL(request.url);
   const params = new URLSearchParams(url.search);
@@ -17,6 +17,7 @@ export const GET: APIRoute = async ({ request }) => {
       await ogImage({
         title: title as string,
         origin: url.origin,
+        siteName: site?.hostname!,
       })
     ),
     {
