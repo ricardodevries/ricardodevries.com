@@ -1,5 +1,4 @@
 ---
-import Js from "./icons/Jss.astro";
 import Sun from "./icons/Sun.astro";
 import Moon from "./icons/Moon.astro";
 ---
@@ -15,12 +14,6 @@ import Moon from "./icons/Moon.astro";
     <li class="dark">
       <button data-toggle-theme="dark">
         <Moon />
-      </button>
-    </li>
-
-    <li class="js">
-      <button data-toggle-theme="js">
-        <Js />
       </button>
     </li>
   </ul>
@@ -82,7 +75,7 @@ import Moon from "./icons/Moon.astro";
     selected?.setAttribute("data-toggle-theme-active", "selected");
   }
   function switchTheme() {
-    const themes = ["dark", "light", "js"];
+    const themes = ["dark", "light"];
 
     const key = "v-for";
     const themeBtns = document.querySelectorAll("[data-toggle-theme]");
