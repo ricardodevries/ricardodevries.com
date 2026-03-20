@@ -1,0 +1,46 @@
+---
+import { getCollection, type CollectionEntry } from "astro:content";
+import { getPageNumbers, getSortedPosts, getPagination } from "@/lib/posts";
+import Posts from "@/components/Posts.astro";
+import Post from "@/components/Post.astro";
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  const posts = await getCollection(
+    "blog",
+    ({ data }) => !data.status || data.status === "published"
+  );
+
+  const pagePaths = getPageNumbers(posts.length).map((pageNum) => ({
+    params: { slug: String(pageNum) },
+    props: { pageNum },
+  }));
+
+  const postPaths = posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+
+  return [...pagePaths, ...postPaths];
+}
+
+const { slug } = Astro.params;
+const { post, pageNum } = Astro.props as {
+  post?: CollectionEntry<"blog">;
+  pageNum?: number;
+};
+
+let pagination;
+if (pageNum !== undefined) {
+  const posts = await getCollection("blog");
+  const sortedPosts = getSortedPosts(posts);
+  pagination = getPagination<CollectionEntry<"blog">>({
+    posts: sortedPosts as CollectionEntry<"blog">[],
+    page: slug,
+  });
+}
+---
+
+{post && <Post post={post} />}
+{pageNum !== undefined && pagination && <Posts {...pagination} isPosts />}

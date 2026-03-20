@@ -1,52 +1,25 @@
 ---
 import { getCollection, type CollectionEntry } from "astro:content";
-import Post from "@/components/Post.astro";
 import Art from "@/components/Art.astro";
 
 export const prerender = true;
 export interface Props {
-  post?: CollectionEntry<"blog">;
   generative?: CollectionEntry<"generative">;
 }
 
 export async function getStaticPaths() {
-  const posts = await getCollection(
-    "blog",
-    ({ data }) => !data.status || data.status === "published"
-  );
-
-  const postResult = posts.map((post) => ({
-    params: { slug: post.id },
-    props: { post },
-  }));
-
   const art = await getCollection(
     "generative",
     ({ data }) => !data.status || data.status === "published"
   );
 
-  const artResult = art.map((art) => ({
+  return art.map((art) => ({
     params: { slug: art?.data?.path ?? art.id },
     props: { generative: art },
   }));
-
-  return [...postResult, ...artResult];
 }
 
-const { post, generative } = Astro.props;
+const { generative } = Astro.props;
 ---
 
-{
-  post && (
-    <>
-      <Post post={post} />
-    </>
-  )
-}
-{
-  generative && (
-    <>
-      <Art post={generative} />
-    </>
-  )
-}
+{generative && <Art post={generative} />}
