@@ -22,7 +22,6 @@ const {
   pubDate,
   updatedDate,
   description,
-  categories,
   keywords,
   prompt,
   heroImageGenerator,
@@ -91,18 +90,5 @@ const updatedstr = updatedDate?.toISOString();
       }}
     />
 
-    {
-      categories && categories.length > 0 && (
-        <div class="flex gap-half mt flex-wrap">
-          {categories.map((category) => (
-            <span class="badge bigger">
-              <a href={`/category/${slugify(category)}`} class="category">
-                {category}
-              </a>
-            </span>
-          ))}
-        </div>
-      )
-    }
   </article>
 </PostLayout>

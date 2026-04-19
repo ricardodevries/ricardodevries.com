@@ -8,23 +8,6 @@ interface GetPaginationProps<T> {
   isIndex?: boolean;
 }
 
-export async function getCategories() {
-  const posts = await getCollection("blog");
-
-  const categories = [
-    ...new Set([].concat.apply(posts.map((post) => post.data.categories))),
-  ];
-
-  return categories;
-}
-
-export async function getCategory(id: string) {
-  const categories = await getCollection("categories");
-
-  const category = categories.find((category) => category.id === id);
-  return category;
-}
-
 export async function getPosts() {
   const posts = (await getCollection("blog"))
     .filter((post) => post.data.status === "published")
@@ -39,16 +22,6 @@ export async function getArt() {
   );
 
   return art;
-}
-
-export async function getPostsByCategory(category: string) {
-  const posts = (await getCollection("blog"))
-    .filter((post) => {
-      return post.data.categories && post.data.categories.includes(category);
-    })
-    .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
-
-  return posts;
 }
 
 export const getLatestPost = async () => {
