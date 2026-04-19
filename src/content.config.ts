@@ -77,14 +77,4 @@ const blog = defineCollection({
   }),
 });
 
-const categories = defineCollection({
-  loader: glob({ base: "src/content/categories", pattern: "**/*.{md,mdx,yaml,json}" }),
-  schema: z.object({
-    title: z.string(),
-    description: z.string(),
-    slug: z.string(),
-    metaDescription: z.string().optional(),
-  }),
-});
-
-export const collections = { blog, generative, talks, categories };
+export const collections = { blog, generative, talks };
