@@ -16,14 +16,6 @@ export async function getPosts() {
   return posts;
 }
 
-export async function getArt() {
-  const art = (await getCollection("generative")).sort(
-    (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
-  );
-
-  return art;
-}
-
 export const getLatestPost = async () => {
   const posts = await getPosts();
   return posts[0];
@@ -65,9 +57,7 @@ export const getPagination = <T>({
   };
 };
 
-export const getSortedPosts = (
-  posts: CollectionEntry<"blog">[] | CollectionEntry<"generative">[]
-) => {
+export const getSortedPosts = (posts: CollectionEntry<"blog">[]) => {
   return posts
     .filter(({ data }) => !data.status || data.status === "published")
     .sort(

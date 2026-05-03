@@ -3,7 +3,6 @@ import Layout from "./Layout.astro";
 import Header from "@/components/Header.astro";
 
 interface Props {
-  isArt?: boolean;
   title: string;
   description?: string;
   metaDescription?: string;
@@ -12,7 +11,6 @@ interface Props {
 const {
   title,
   description,
-  isArt = false,
   metaDescription,
   keywords,
 } = Astro.props;
@@ -24,7 +22,7 @@ const {
   metaDescription={metaDescription}
   keywords={keywords}
 >
-  <Header isPost={!isArt} />
+  <Header />
   <main class="wrap">
     <slot />
   </main>

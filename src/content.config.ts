@@ -20,34 +20,6 @@ const talks = defineCollection({
   }),
 });
 
-const generative = defineCollection({
-  loader: glob({ base: "src/content/generative", pattern: "**/*.{md,mdx}" }),
-  schema: z.object({
-    title: z.string(),
-    status: z.enum(["draft", "published"]).optional(),
-    path: z.string().optional(),
-    pubDate: z
-      .string()
-      .or(z.date())
-      .transform((val) => new Date(val)),
-    updatedDate: z
-      .string()
-      .optional()
-      .transform((str) => (str ? new Date(str) : undefined)),
-    categories: z.array(z.string()).optional(),
-    heroImage: z.string().optional(),
-    description: z.string().optional(),
-    fork: z
-      .array(
-        z.object({
-          title: z.string(),
-          url: z.string(),
-        })
-      )
-      .optional(),
-  }),
-});
-
 const blog = defineCollection({
   loader: glob({ base: "src/content/blog", pattern: "**/*.{md,mdx}" }),
   schema: z.object({
@@ -77,4 +49,4 @@ const blog = defineCollection({
   }),
 });
 
-export const collections = { blog, generative, talks };
+export const collections = { blog, talks };
