@@ -1,0 +1,613 @@
+---
+import PostLayout from "../../layouts/PostLayout.astro";
+import ChartTotalVisits from "../../components/ChartTotalVisits.svelte";
+import { db, Analytics, sql, gte, and, eq, desc } from "astro:db";
+
+const RANGES: Record<string, number | null> = {
+  "7d": 7,
+  "30d": 30,
+  "90d": 90,
+  all: null,
+};
+
+const rangeParam = Astro.url.searchParams.get("range") || "30d";
+const range = rangeParam in RANGES ? rangeParam : "30d";
+const days = RANGES[range] ?? null;
+const pathFilter = Astro.url.searchParams.get("path") || null;
+
+const now = new Date();
+const rangeStart = days ? new Date(now.getTime() - days * 86400000) : null;
+const prevStart =
+  rangeStart ? new Date(rangeStart.getTime() - days! * 86400000) : null;
+
+interface Row {
+  id: string;
+  date: Date;
+  path: string;
+  referrer: string | null;
+  botName: string | null;
+  flag: string | null;
+  country: string | null;
+  city: string | null;
+  fingerprint: string | null;
+}
+
+let rows: Row[] = [];
+let prevRows: Row[] = [];
+
+try {
+  const conditions = [];
+  if (rangeStart) conditions.push(gte(Analytics.date, rangeStart));
+  if (pathFilter) conditions.push(eq(Analytics.path, pathFilter));
+
+  rows = await db
+    .select()
+    .from(Analytics)
+    .where(conditions.length > 0 ? and(...conditions) : undefined);
+
+  if (prevStart && rangeStart) {
+    const prevConditions = [
+      gte(Analytics.date, prevStart),
+      sql`${Analytics.date} < ${rangeStart}`,
+    ];
+    if (pathFilter) prevConditions.push(eq(Analytics.path, pathFilter));
+
+    prevRows = await db
+      .select()
+      .from(Analytics)
+      .where(and(...prevConditions));
+  }
+} catch (error) {
+  console.error("Analytics fetch error:", error);
+}
+
+const humanRows = rows.filter((r) => !r.botName);
+const botRows = rows.filter((r) => r.botName);
+const prevHumanRows = prevRows.filter((r) => !r.botName);
+const prevBotRows = prevRows.filter((r) => r.botName);
+
+const visitorKey = (r: Row) => r.fingerprint ?? r.id;
+
+function groupUnique<R>(
+  rows: Row[],
+  keyFn: (r: Row) => string | null,
+  initFn: (r: Row) => R
+): (R & { total: number })[] {
+  const groups = new Map<string, { first: Row; keys: Set<string> }>();
+  for (const r of rows) {
+    const key = keyFn(r);
+    if (key === null) continue;
+    const g = groups.get(key);
+    if (g) g.keys.add(visitorKey(r));
+    else groups.set(key, { first: r, keys: new Set([visitorKey(r)]) });
+  }
+  return Array.from(groups.values()).map((g) => ({
+    ...initFn(g.first),
+    total: g.keys.size,
+  }));
+}
+
+function groupCount<R>(
+  rows: Row[],
+  keyFn: (r: Row) => string | null,
+  initFn: (r: Row) => R
+): (R & { total: number })[] {
+  const groups = new Map<string, R & { total: number }>();
+  for (const r of rows) {
+    const key = keyFn(r);
+    if (key === null) continue;
+    const existing = groups.get(key);
+    if (existing) existing.total++;
+    else groups.set(key, { ...initFn(r), total: 1 });
+  }
+  return Array.from(groups.values());
+}
+
+function topN<T extends { total: number }>(items: T[], n: number): T[] {
+  return items.sort((a, b) => b.total - a.total).slice(0, n);
+}
+
+const fmtDate = (d: Date): string => {
+  const day = d.getDate().toString().padStart(2, "0");
+  const mon = new Intl.DateTimeFormat("en", { month: "short" }).format(d);
+  return `${day} ${mon}`;
+};
+
+function buildDateSeries(
+  rows: Row[],
+  groupFn: (rows: Row[], keyFn: (r: Row) => string | null, initFn: (r: Row) => { date: string }) => { date: string; total: number }[],
+  start: Date,
+  end: Date
+): { date: string; total: number }[] {
+  const grouped = groupFn(
+    rows,
+    (r) => fmtDate(r.date),
+    (r) => ({ date: fmtDate(r.date) })
+  );
+  const map = new Map(grouped.map((g) => [g.date, g]));
+  const result: { date: string; total: number }[] = [];
+  const cursor = new Date(start);
+  while (cursor <= end) {
+    const key = fmtDate(cursor);
+    result.push(map.get(key) ?? { date: key, total: 0 });
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return result;
+}
+
+const chartStart = rangeStart ?? rows.reduce((min, r) => (r.date < min ? r.date : min), now);
+const visitorsDateData = buildDateSeries(humanRows, groupUnique, chartStart, now);
+const viewsDateData = buildDateSeries(humanRows, groupCount, chartStart, now);
+
+const normalizeRef = (r: string | null): string => {
+  if (!r) return "";
+  return r.includes("ricardodevries.com")
+    ? "https://ricardodevries.com"
+    : r;
+};
+
+const pageData = topN(
+  groupUnique(humanRows, (r) => r.path, (r) => ({ path: r.path })),
+  10
+);
+
+const refData = topN(
+  groupUnique(
+    humanRows,
+    (r) => normalizeRef(r.referrer) || null,
+    (r) => ({ referrer: normalizeRef(r.referrer) })
+  ).filter((r) => r.referrer !== ""),
+  10
+);
+
+const botData = topN(
+  groupCount(botRows, (r) => r.botName, (r) => ({ botName: r.botName! })),
+  10
+);
+
+const cityData = topN(
+  groupUnique(
+    humanRows,
+    (r) => (r.city ? `${r.country}-${r.city}` : null),
+    (r) => ({ city: r.city!, country: r.country!, flag: r.flag })
+  ),
+  10
+);
+
+const totalViews = humanRows.length;
+const uniqueVisitors = new Set(humanRows.map(visitorKey)).size;
+const totalBots = botRows.length;
+
+const prevViews = prevHumanRows.length;
+const prevVisitors = new Set(prevHumanRows.map(visitorKey)).size;
+const prevBots = prevBotRows.length;
+
+function delta(current: number, previous: number): string | null {
+  if (!prevStart) return null;
+  const diff = current - previous;
+  if (diff === 0) return null;
+  return diff > 0 ? `+${diff}` : `${diff}`;
+}
+
+let allTimeHuman = 0;
+let yearlyData: { year: string; total: number }[] = [];
+
+try {
+  const allTimeResult = await db
+    .select({ total: sql<number>`count(*)` })
+    .from(Analytics)
+    .where(sql`${Analytics.botName} is null`);
+  allTimeHuman = allTimeResult[0]?.total ?? 0;
+
+  yearlyData = await db
+    .select({
+      year: sql<string>`strftime('%Y', ${Analytics.date})`,
+      total: sql<number>`count(*)`,
+    })
+    .from(Analytics)
+    .where(sql`${Analytics.botName} is null`)
+    .groupBy(sql`strftime('%Y', ${Analytics.date})`)
+    .orderBy(sql`strftime('%Y', ${Analytics.date}) desc`);
+} catch (error) {
+  console.error("All-time analytics error:", error);
+}
+
+let recentRows: Row[] = [];
+try {
+  const conditions = [];
+  if (pathFilter) conditions.push(eq(Analytics.path, pathFilter));
+
+  recentRows = await db
+    .select()
+    .from(Analytics)
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(desc(Analytics.date))
+    .limit(10);
+} catch (error) {
+  console.error("Recent analytics error:", error);
+}
+
+const fmtTime = (d: Date): string => {
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(d);
+};
+
+function rangeUrl(r: string): string {
+  const params = new URLSearchParams();
+  if (r !== "30d") params.set("range", r);
+  if (pathFilter) params.set("path", pathFilter);
+  const qs = params.toString();
+  return `/analytics${qs ? `?${qs}` : ""}`;
+}
+
+function pathUrl(path: string): string {
+  const params = new URLSearchParams();
+  params.set("path", path);
+  if (range !== "30d") params.set("range", range);
+  return `/analytics?${params.toString()}`;
+}
+
+const rangeLabel = days ? `Last ${days} days` : "All time";
+---
+
+<PostLayout title="Analytics" description="Site analytics">
+  <h1>
+    Analytics
+    {pathFilter && (
+      <span class="path-filter">
+        <a href={rangeUrl(range)} class="clear-filter" aria-label="Clear path filter">&times;</a>
+        {pathFilter}
+      </span>
+    )}
+  </h1>
+
+  <nav class="range-nav" aria-label="Time range">
+    {Object.keys(RANGES).map((r) => (
+      <a
+        href={rangeUrl(r)}
+        class:list={["range-link", { active: r === range }]}
+        aria-current={r === range ? "page" : undefined}
+      >
+        {r}
+      </a>
+    ))}
+  </nav>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <span class="stat-value">{allTimeHuman.toLocaleString()}</span>
+      <span class="stat-label">All-time views</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-value">
+        {uniqueVisitors.toLocaleString()}
+      </span>
+      {delta(uniqueVisitors, prevVisitors) && (
+        <span class:list={["stat-delta", { positive: uniqueVisitors > prevVisitors, negative: uniqueVisitors < prevVisitors }]}>
+          {delta(uniqueVisitors, prevVisitors)}
+        </span>
+      )}
+      <span class="stat-label">Visitors</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-value">
+        {totalViews.toLocaleString()}
+      </span>
+      {delta(totalViews, prevViews) && (
+        <span class:list={["stat-delta", { positive: totalViews > prevViews, negative: totalViews < prevViews }]}>
+          {delta(totalViews, prevViews)}
+        </span>
+      )}
+      <span class="stat-label">Views</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-value">
+        {totalBots.toLocaleString()}
+      </span>
+      {delta(totalBots, prevBots) && (
+        <span class:list={["stat-delta", { positive: totalBots > prevBots, negative: totalBots < prevBots }]}>
+          {delta(totalBots, prevBots)}
+        </span>
+      )}
+      <span class="stat-label">Bot visits</span>
+    </div>
+  </div>
+
+  {yearlyData.length > 1 && !pathFilter && (
+    <section class="section">
+      <h2>Yearly</h2>
+      <ul class="no-list">
+        {yearlyData.map((y) => (
+          <li class="lined row">
+            <span>{y.year}</span>
+            <span class="row-count">{y.total.toLocaleString()}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  {
+    rows.length > 0 ? (
+      <Fragment>
+        <section class="section">
+          <h2>Unique Visitors</h2>
+          <p class="faded section-sub">{rangeLabel}</p>
+          <ChartTotalVisits client:load data={visitorsDateData} />
+        </section>
+
+        <section class="section">
+          <h2>Views</h2>
+          <p class="faded section-sub">{rangeLabel}</p>
+          <ChartTotalVisits client:load data={viewsDateData} />
+        </section>
+
+        <div class="two-col">
+          <section class="section">
+            <h2>Top Pages</h2>
+            <ul class="no-list">
+              {pageData.map((item) => (
+                <li class="lined row">
+                  <a href={pathUrl(item.path)}>{item.path}</a>
+                  <span class="row-count">{item.total}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section class="section">
+            <h2>Top Referrers</h2>
+            {refData.length > 0 ? (
+              <ul class="no-list">
+                {refData.map((item) => (
+                  <li class="lined row">
+                    <span>{item.referrer}</span>
+                    <span class="row-count">{item.total}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p class="faded">No referrers recorded yet.</p>
+            )}
+          </section>
+        </div>
+
+        <div class="two-col">
+          <section class="section">
+            <h2>Top Cities</h2>
+            {cityData.length > 0 ? (
+              <ul class="no-list">
+                {cityData.map((item) => (
+                  <li class="lined row">
+                    <span>
+                      {item.flag} {item.city}
+                    </span>
+                    <span class="row-count">{item.total}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p class="faded">No city data recorded yet.</p>
+            )}
+          </section>
+
+          <section class="section">
+            <h2>Top Bots</h2>
+            {botData.length > 0 ? (
+              <ul class="no-list">
+                {botData.map((item) => (
+                  <li class="lined row">
+                    <span>{item.botName}</span>
+                    <span class="row-count">{item.total}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p class="faded">No bot visits recorded yet.</p>
+            )}
+          </section>
+        </div>
+
+        <section class="section">
+          <h2>Recent Activity</h2>
+          {recentRows.length > 0 ? (
+            <ul class="no-list">
+              {recentRows.map((r) => (
+                <li class="lined row recent-row">
+                  <span class="recent-time">{fmtTime(r.date)}</span>
+                  <span class="recent-path">
+                    <a href={pathUrl(r.path)}>{r.path}</a>
+                  </span>
+                  {r.flag && <span class="recent-flag">{r.flag}</span>}
+                  {r.botName && <span class="badge">{r.botName}</span>}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p class="faded">No recent activity.</p>
+          )}
+        </section>
+      </Fragment>
+    ) : (
+      <p class="faded mt-2">No analytics data available yet.</p>
+    )
+  }
+</PostLayout>
+
+<style>
+  .range-nav {
+    display: flex;
+    gap: 2px;
+    margin-top: var(--gap);
+  }
+
+  .range-link {
+    padding: 4px 12px;
+    font-size: var(--font-small);
+    border: 1px solid var(--faded-line);
+    color: var(--faded-text);
+    text-decoration: none;
+  }
+
+  .range-link:first-child {
+    border-radius: var(--radius) 0 0 var(--radius);
+  }
+
+  .range-link:last-child {
+    border-radius: 0 var(--radius) var(--radius) 0;
+  }
+
+  .range-link.active {
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+  }
+
+  .path-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--font-small);
+    font-weight: 400;
+    color: var(--faded-text);
+    background: var(--faded-bg);
+    padding: 2px 8px;
+    border-radius: var(--radius);
+    vertical-align: middle;
+    margin-left: 8px;
+  }
+
+  .clear-filter {
+    color: var(--faded-text);
+    text-decoration: none;
+    font-size: 1.1em;
+    line-height: 1;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--gap);
+    margin-top: var(--gap);
+  }
+
+  .stat-card {
+    display: flex;
+    flex-direction: column;
+    padding: var(--gap);
+    border: 1px solid var(--faded-line);
+    border-radius: var(--radius);
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  .stat-delta {
+    font-size: var(--font-small);
+    margin-top: 2px;
+  }
+
+  .stat-delta.positive {
+    color: #297a3a;
+  }
+
+  .stat-delta.negative {
+    color: #bd2864;
+  }
+
+  .stat-label {
+    font-size: var(--font-small);
+    color: var(--faded-text);
+    margin-top: 4px;
+  }
+
+  .section {
+    margin-top: calc(var(--gap) * 2.5);
+  }
+
+  .section h2 {
+    margin-bottom: 0;
+  }
+
+  .section-sub {
+    font-size: var(--font-small);
+    margin: 0;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: calc(var(--gap) * 2);
+    margin-top: calc(var(--gap) * 2.5);
+  }
+
+  .two-col .section {
+    margin-top: 0;
+  }
+
+  .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1em;
+  }
+
+  .row > :first-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+
+  .row-count {
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+    color: var(--faded-text);
+  }
+
+  .recent-row {
+    gap: 0.75em;
+    font-size: var(--font-small);
+  }
+
+  .recent-time {
+    flex-shrink: 0;
+    color: var(--faded-text);
+    min-width: auto;
+  }
+
+  .recent-path {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+
+  .recent-flag {
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 600px) {
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .two-col {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+
+    .two-col .section {
+      margin-top: calc(var(--gap) * 2.5);
+    }
+  }
+</style>
