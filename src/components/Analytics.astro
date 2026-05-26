@@ -1,0 +1,10 @@
+<script>
+  document.addEventListener("astro:page-load", () => {
+    const path = window.location.pathname;
+    if (path.startsWith("/analytics")) return;
+    navigator.sendBeacon(
+      "/api/page-view",
+      JSON.stringify({ path, referrer: document.referrer })
+    );
+  });
+</script>

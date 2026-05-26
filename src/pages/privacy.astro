@@ -1,0 +1,62 @@
+---
+import PostLayout from "../layouts/PostLayout.astro";
+---
+
+<PostLayout title="Privacy" description="What data this site collects and why">
+  <h1>Privacy</h1>
+
+  <p>
+    This site collects basic analytics to understand how it's used. No data is
+    sold, shared with third parties, or used for advertising. Everything is
+    self-hosted on my own server.
+  </p>
+
+  <h2>What is collected</h2>
+  <p>When you visit a page, the following is recorded:</p>
+  <ul>
+    <li><strong>Page path</strong> — which page you visited</li>
+    <li><strong>Referrer</strong> — where you came from (if your browser sends it)</li>
+    <li><strong>Country and city</strong> — derived from your IP address via a local GeoIP database</li>
+    <li><strong>A fingerprint</strong> — a one-way hash of your IP address and user agent, salted daily, used only to count unique visitors</li>
+  </ul>
+
+  <p>
+    Your raw IP address is <strong>never stored</strong> in the database. The
+    fingerprint cannot be reversed to recover your IP.
+  </p>
+
+  <h2>Bot and crawler tracking</h2>
+  <p>
+    Visits from known bots and AI crawlers are tracked separately and labeled
+    with the bot name. This helps me understand how automated services interact
+    with my content.
+  </p>
+
+  <h2>Blog post view counts</h2>
+  <p>
+    Each blog post has a view counter. A daily fingerprint is used to
+    deduplicate counts so refreshing a page doesn't inflate the number.
+    Bot visits do not increment view counts.
+  </p>
+
+  <h2>Data retention</h2>
+  <p>
+    Fingerprints are automatically anonymized (set to null) after
+    <strong>7 days</strong>. After that point, visits can no longer be
+    correlated to a visitor — only the aggregate data (path, country, date)
+    remains.
+  </p>
+
+  <h2>No cookies, no tracking scripts</h2>
+  <p>
+    This site does not use cookies, localStorage for tracking, or any
+    third-party analytics services. There is no Google Analytics, no Facebook
+    pixel, and no advertising tracker.
+  </p>
+
+  <h2>The analytics dashboard</h2>
+  <p>
+    All collected data is visible on the public
+    <a href="/analytics">analytics page</a>. You can see exactly what I see.
+  </p>
+</PostLayout>
