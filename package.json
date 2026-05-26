@@ -28,17 +28,22 @@
   },
   "devDependencies": {
     "@astrojs/sitemap": "^3.7.2",
+    "@eslint/js": "^10.0.1",
     "@shikijs/rehype": "^4.0.2",
     "@shikijs/transformers": "^4.0.2",
     "@types/geoip-lite": "^1.4.4",
     "@types/mdast": "^4.0.4",
     "@types/react": "^19.2.14",
     "@types/unist": "^3.0.3",
+    "eslint": "^10.4.0",
+    "eslint-plugin-astro": "^1.7.0",
+    "eslint-plugin-svelte": "^3.17.1",
     "hastscript": "^9.0.1",
     "react": "^19.2.5",
     "rehype-external-links": "^3.0.0",
     "shiki": "^4.0.2",
     "svelte": "^5.55.3",
+    "typescript-eslint": "^8.60.0",
     "unified": "^11.0.5",
     "unist-util-visit": "^5.1.0"
   }
