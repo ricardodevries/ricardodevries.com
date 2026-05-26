@@ -439,7 +439,10 @@ const rangeLabel = days ? `Last ${days} days` : "All time";
   }
 </PostLayout>
 
-<style>
+<style lang="scss">
+  $positive: #297a3a;
+  $negative: #bd2864;
+
   .range-nav {
     display: flex;
     gap: 2px;
@@ -452,20 +455,20 @@ const rangeLabel = days ? `Last ${days} days` : "All time";
     border: 1px solid var(--faded-line);
     color: var(--faded-text);
     text-decoration: none;
-  }
 
-  .range-link:first-child {
-    border-radius: var(--radius) 0 0 var(--radius);
-  }
+    &:first-child {
+      border-radius: var(--radius) 0 0 var(--radius);
+    }
 
-  .range-link:last-child {
-    border-radius: 0 var(--radius) var(--radius) 0;
-  }
+    &:last-child {
+      border-radius: 0 var(--radius) var(--radius) 0;
+    }
 
-  .range-link.active {
-    background: var(--text);
-    color: var(--bg);
-    border-color: var(--text);
+    &.active {
+      background: var(--text);
+      color: var(--bg);
+      border-color: var(--text);
+    }
   }
 
   .path-filter {
@@ -513,14 +516,14 @@ const rangeLabel = days ? `Last ${days} days` : "All time";
   .stat-delta {
     font-size: var(--font-small);
     margin-top: 2px;
-  }
 
-  .stat-delta.positive {
-    color: #297a3a;
-  }
+    &.positive {
+      color: $positive;
+    }
 
-  .stat-delta.negative {
-    color: #bd2864;
+    &.negative {
+      color: $negative;
+    }
   }
 
   .stat-label {
@@ -531,10 +534,10 @@ const rangeLabel = days ? `Last ${days} days` : "All time";
 
   .section {
     margin-top: calc(var(--gap) * 2.5);
-  }
 
-  .section h2 {
-    margin-bottom: 0;
+    h2 {
+      margin-bottom: 0;
+    }
   }
 
   .section-sub {
@@ -547,10 +550,10 @@ const rangeLabel = days ? `Last ${days} days` : "All time";
     grid-template-columns: 1fr 1fr;
     gap: calc(var(--gap) * 2);
     margin-top: calc(var(--gap) * 2.5);
-  }
 
-  .two-col .section {
-    margin-top: 0;
+    .section {
+      margin-top: 0;
+    }
   }
 
   .row {
@@ -558,13 +561,13 @@ const rangeLabel = days ? `Last ${days} days` : "All time";
     justify-content: space-between;
     align-items: baseline;
     gap: 1em;
-  }
 
-  .row > :first-child {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    min-width: 0;
+    > :first-child {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+    }
   }
 
   .row-count {
@@ -604,10 +607,10 @@ const rangeLabel = days ? `Last ${days} days` : "All time";
     .two-col {
       grid-template-columns: 1fr;
       gap: 0;
-    }
 
-    .two-col .section {
-      margin-top: calc(var(--gap) * 2.5);
+      .section {
+        margin-top: calc(var(--gap) * 2.5);
+      }
     }
   }
 </style>

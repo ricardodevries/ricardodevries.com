@@ -38,9 +38,11 @@ const next = currentPage < totalPages ? "" : "disabled";
   }
 </div>
 
-<style>
-  [aria-disabled] {
-    opacity: 0.5;
-    cursor: not-allowed;
+<style lang="scss">
+  nav {
+    [aria-disabled] {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   }
 </style>

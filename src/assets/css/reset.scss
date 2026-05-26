@@ -1,0 +1,27 @@
+$media-elements: img, picture, video, canvas, svg;
+$text-elements: p, h1, h2, h3;
+
+* {
+  &,
+  &::before,
+  &::after {
+    box-sizing: border-box;
+  }
+
+  margin: 0;
+  padding: 0;
+}
+
+:target {
+  scroll-margin-block: 5ex;
+}
+
+#{$media-elements} {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+#{$text-elements} {
+  overflow-wrap: break-word;
+}

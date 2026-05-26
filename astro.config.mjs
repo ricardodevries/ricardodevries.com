@@ -1,7 +1,7 @@
 import { defineConfig, fontProviders } from "astro/config";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
-import svelte from "@astrojs/svelte";
+import svelte, { vitePreprocess } from "@astrojs/svelte";
 import node from "@astrojs/node";
 import { rehypePlugins, remarkPlugins } from "./config/plugins";
 import db from "@astrojs/db";
@@ -16,7 +16,12 @@ export default defineConfig({
     rehypePlugins,
     remarkPlugins,
   },
-  integrations: [mdx(), svelte({ preprocess: [] }), sitemap(), db()],
+  integrations: [
+    mdx(),
+    svelte({ preprocess: vitePreprocess() }),
+    sitemap(),
+    db(),
+  ],
   vite: {
     optimizeDeps: {
       exclude: ["@resvg/resvg-js"],
