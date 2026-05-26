@@ -128,31 +128,33 @@
   </div>
 {/if}
 
-<style>
+<style lang="scss">
   .chart-wrap {
     position: relative;
     width: 100%;
     margin: var(--gap) 0;
-  }
-  svg {
-    width: 100%;
-    height: auto;
-    display: block;
-    overflow: hidden;
-  }
-  .tip {
-    position: absolute;
-    top: 0;
-    transform: translateX(-50%);
-    background: var(--bg);
-    border: 1px solid var(--faded-line);
-    border-radius: var(--radius, 4px);
-    padding: 4px 8px;
-    font-size: 12px;
-    pointer-events: none;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    white-space: nowrap;
+
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      overflow: hidden;
+    }
+
+    .tip {
+      position: absolute;
+      top: 0;
+      transform: translateX(-50%);
+      background: var(--bg);
+      border: 1px solid var(--faded-line);
+      border-radius: var(--radius, 4px);
+      padding: 4px 8px;
+      font-size: 12px;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      white-space: nowrap;
+    }
   }
 </style>

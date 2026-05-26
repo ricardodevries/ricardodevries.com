@@ -1,4 +1,4 @@
-/* Code */
+$copy-animation-duration: 1.25s;
 
 .code-header {
   background: var(--code-bg);
@@ -8,22 +8,35 @@
   border-top-right-radius: var(--radius);
 }
 
-.code-header.shallow {
-  height: 32px;
-  --dot-size: 6px;
-}
-
-.fake-window,
-.tabbed-code-wrapper,
 .copy-code-wrapper {
   position: relative;
   border: 1px solid var(--code-border);
   border-radius: var(--radius);
-}
 
-.tabbed-code-wrapper pre,
-.copy-code-wrapper pre {
-  padding: 4px;
+  pre {
+    margin: 0;
+    overflow-x: auto;
+    counter-reset: line;
+    padding: calc(var(--gap)) 0;
+  }
+
+  code {
+    display: grid;
+    font-size: 13px;
+    line-height: 24px;
+    flex-direction: column;
+
+    &::before,
+    &::after {
+      content: "";
+    }
+
+    > .line {
+      height: 24px;
+      position: relative;
+      padding: 0 var(--gap);
+    }
+  }
 }
 
 .copy-btn {
@@ -41,40 +54,53 @@
   background: inherit;
   position: relative;
   transition: background 0.2s ease;
+
+  &.fluid {
+    width: auto;
+    min-width: 24px;
+    height: 24px;
+    padding-left: 8px;
+    border: 1px solid var(--faded-text);
+    color: var(--faded-text);
+    font-size: var(--font-tiny);
+
+    .icon-holder {
+      width: 24px;
+      height: 24px;
+      position: relative;
+    }
+  }
+
+  &:hover {
+    background: var(--faded-bg);
+  }
+
+  &.copied {
+    .btn-icon-copy {
+      animation: code-icon-hide $copy-animation-duration forwards;
+    }
+
+    .btn-icon-check {
+      animation: code-icon-show $copy-animation-duration 0.15s forwards;
+    }
+  }
 }
 
-.copy-btn.fluid {
-  width: auto;
-  min-width: 24px;
-  height: 24px;
-  padding-left: 8px;
-  border: 1px solid var(--faded-text);
-  color: var(--faded-text);
-  font-size: var(--font-tiny);
+.line {
+  &.has-highlight {
+    background: var(--highlight);
+  }
 }
 
-.copy-btn.fluid .icon-holder {
-  width: 24px;
-  height: 24px;
-  position: relative;
-}
+.diff {
+  &.add {
+    background: var(--diff-add);
 
-.copy-btn:hover {
-  background: var(--faded-bg);
-}
-
-/* Highlight & diff */
-.line.has-highlight {
-  background: var(--highlight);
-}
-
-.diff.add {
-  background: var(--diff-add);
-}
-
-.diff.add:before {
-  content: "+";
-  color: var(--diff-add-color);
+    &:before {
+      content: "+";
+      color: var(--diff-add-color);
+    }
+  }
 }
 
 .highlighted-word {
@@ -85,7 +111,6 @@
   border-radius: 4px;
 }
 
-/* Btn */
 .btn-holder {
   position: absolute;
   top: 50%;
@@ -98,22 +123,6 @@
 .btn-icon-check {
   opacity: 0;
   transform: translate(-50%, -50%) scale(0.5);
-}
-
-.copy-btn.copied .btn-icon-copy {
-  animation: code-icon-hide 1.25s forwards;
-}
-
-.copy-btn.copied .btn-icon-check {
-  animation: code-icon-show 1.25s 0.15s forwards;
-}
-
-/* Dors */
-.t-dot {
-  width: var(--dot-size);
-  height: var(--dot-size);
-  background-color: var(--faded-line);
-  border-radius: 50%;
 }
 
 @keyframes code-icon-hide {
@@ -165,7 +174,6 @@
   }
 }
 
-/* Inline */
 code {
   text-align: left;
   white-space: pre;
@@ -176,46 +184,10 @@ code {
   -webkit-hyphens: none;
   hyphens: none;
 }
+
 .inline-code {
   font-size: medium;
   font-feature-settings: "ss09", none;
   font-variant-ligatures: none;
   text-wrap: auto;
-}
-
-/* Generics */
-
-.code-leader {
-  pointer-events: none;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  line-height: 24px;
-  -webkit-user-select: none; /* Safari */
-  -ms-user-select: none; /* IE 10 and IE 11 */
-  user-select: none; /* Standard syntax */
-}
-
-.tabbed-code-wrapper code,
-.copy-code-wrapper code {
-  display: grid;
-  font-size: 13px;
-  line-height: 24px;
-  flex-direction: column;
-}
-
-.copy-code-wrapper code::before,
-.copy-code-wrapper code::after {
-  content: "";
-}
-
-.copy-code-wrapper code > .line {
-  height: 24px;
-  position: relative;
-  padding: 0 var(--gap);
-}
-.copy-code-wrapper pre {
-  margin: 0;
-  overflow-x: auto;
-  counter-reset: line;
-  padding: calc(var(--gap)) 0;
 }

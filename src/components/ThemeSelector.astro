@@ -19,45 +19,48 @@ import Moon from "./icons/Moon.astro";
   </ul>
 </div>
 
-<style>
-  svg {
-    color: var(--text);
-    width: 16px;
-    height: auto;
-  }
-  ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    background: var(--faded-bg);
-    line-height: 1;
-    border-radius: var(--radius);
-    align-items: center;
-    justify-content: center;
-  }
-  li {
-    display: flex;
-  }
+<style lang="scss">
+  .theme-selector {
+    svg {
+      color: var(--text);
+      width: 16px;
+      height: auto;
+    }
 
-  button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    height: 24px;
-    width: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    border-radius: var(--radius);
-    color: var(--text);
-    transition: background 0.2s ease;
-  }
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      background: var(--faded-bg);
+      line-height: 1;
+      border-radius: var(--radius);
+      align-items: center;
+      justify-content: center;
+    }
 
-  [data-toggle-theme-active],
-  button:hover {
-    background: var(--faded-bg);
+    li {
+      display: flex;
+    }
+
+    button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      height: 24px;
+      width: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius);
+      color: var(--text);
+      transition: background 0.2s ease;
+
+      &[data-toggle-theme-active],
+      &:hover {
+        background: var(--faded-bg);
+      }
+    }
   }
 </style>
 
