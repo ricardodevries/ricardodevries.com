@@ -1,85 +1,148 @@
 ---
-import Go from "./icons/Go.astro";
-import Js from "./icons/Jss.astro";
-import Ts from "./icons/Ts.astro";
-import Vue from "./icons/Vue.astro";
-import EnvIcon from "./icons/Env.astro";
-import React from "./icons/React.astro";
-import Svelte from "./icons/Svelte.astro";
-import Json from "./icons/Json.astro";
-import Dots from "./icons/Dots.astro";
-import Docker from "./icons/Docker.astro";
-import AstroIcon from "./icons/Astro.astro";
-import Sql from "./icons/Sql.astro";
-import Prisma from "./icons/Prisma.astro";
+import spriteMarkup from "@dev.icons/core/sprite?raw";
+import { getIcon, type IconRecord } from "@dev.icons/core";
+import { Check, Copy } from "@lucide/astro";
 
-import Copy from "./icons/Copy.svelte";
-import Check from "./icons/Check.svelte";
+interface Props {
+  code: string;
+  lang?: string;
+  langName?: string;
+  title?: string | null;
+}
 
-const props = Astro.props;
-const { lang, langName, code, title } = props;
+interface DevIconSymbol {
+  content: string;
+  viewBox: string;
+}
 
-const getComponent = (lang, title) => {
-  if (title?.includes(".env")) {
-    return EnvIcon;
-  }
-  if (title?.includes("prisma")) {
-    return Prisma;
-  }
-  switch (lang) {
-    case "go":
-      return Go;
-    case "js":
-    case "javascript":
-      return Js;
-    case "json":
-      return Json;
-    case "sql":
-      return Sql;
-    case "astro":
-      return AstroIcon;
-    case "ts":
-    case "typescript":
-      return Ts;
-    case "vue":
-      return Vue;
-    case "react":
-    case "tsx":
-    case "jsx":
-      return React;
-    case "svelte":
-      return Svelte;
-    case "prisma":
-      return Prisma;
-    case "docker":
-      return Docker;
-    case "bash":
-    case "sh":
-    case "shell":
-      return Dots;
-    default:
-      return null;
-  }
+const { code, lang = "", langName, title }: Props = Astro.props;
+
+const preferredIconSlugs: Record<string, string> = {
+  astro: "astro-icon",
+  bash: "bash-icon",
+  css: "css-3-icon",
+  docker: "docker-icon",
+  dockerfile: "docker-icon",
+  env: "env",
+  html: "html-5",
+  js: "javascript",
+  jsx: "react",
+  md: "markdown",
+  mjs: "javascript",
+  node: "nodejs-icon",
+  nodejs: "nodejs-icon",
+  "node-js": "nodejs-icon",
+  sh: "bash-icon",
+  shell: "bash-icon",
+  sql: "postgresql",
+  svelte: "svelte-icon",
+  ts: "typescript-icon",
+  tsx: "react",
+  typescript: "typescript-icon",
+  yml: "yaml",
 };
 
-const IconLang = getComponent(lang, title);
+const normalizeIconSlug = (value: string): string =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/^@/, "")
+    .replace(/^\./, "")
+    .replace(/\+\+/g, "-plusplus")
+    .replace(/\+/g, "-plus")
+    .replace(/#/g, "-sharp")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+const getExistingIconSlug = (candidate: string): string | null => {
+  const preferredCandidate = preferredIconSlugs[candidate];
+  const candidates = preferredCandidate
+    ? [preferredCandidate]
+    : [`${candidate}-icon`, candidate];
+
+  for (const slug of candidates) {
+    if (getIcon(slug)) return slug;
+  }
+
+  return null;
+};
+
+const getTitleIconCandidates = (title?: string | null): string[] => {
+  if (!title) return [];
+
+  const normalizedTitle = normalizeIconSlug(title);
+  const extension = title.match(/\.([a-z0-9]+)$/i)?.[1];
+
+  return [
+    normalizedTitle,
+    extension ? normalizeIconSlug(extension) : "",
+    ...normalizedTitle.split("-"),
+  ];
+};
+
+const getIconSlug = (lang: string, title?: string | null): string | null => {
+  const normalizedLang = normalizeIconSlug(lang);
+  const candidates = [
+    ...getTitleIconCandidates(title),
+    normalizedLang,
+    preferredIconSlugs[normalizedLang],
+    normalizedLang ? `${normalizedLang}-icon` : "",
+  ];
+
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+
+    const iconSlug = getExistingIconSlug(candidate);
+    if (iconSlug) return iconSlug;
+  }
+
+  return null;
+};
+
+const getIconSymbol = (name: string): DevIconSymbol | null => {
+  const symbolMatch = spriteMarkup.match(
+    new RegExp(`<symbol([^>]*\\sid="${name}"[^>]*)>([\\s\\S]*?)<\\/symbol>`)
+  );
+  if (!symbolMatch) return null;
+
+  return {
+    content: symbolMatch[2],
+    viewBox: symbolMatch[1].match(/\sviewBox="([^"]+)"/)?.[1] ?? "0 0 600 600",
+  };
+};
+
+const langIcon = getIconSlug(lang, title);
+const codeIcon: IconRecord | undefined = langIcon
+  ? getIcon(langIcon)
+  : undefined;
+const codeIconSymbol = codeIcon ? getIconSymbol(codeIcon.name) : null;
+const codeIconLabel = langName ?? langIcon ?? lang;
 ---
 
 <div class="code-header flex space-between center px-1">
   <div class="code-filename flex center gap-half">
-    <div class="code-icon">
-      {IconLang && <IconLang />}
-    </div>
+    {
+      codeIconSymbol && (
+        <svg
+          class="code-icon"
+          role="img"
+          aria-label={codeIconLabel}
+          viewBox={codeIconSymbol?.viewBox ?? "0 0 600 600"}
+        >
+          {codeIconSymbol && <Fragment set:html={codeIconSymbol.content} />}
+        </svg>
+      )
+    }
     {title && <span class="mono small-text lh-1">{title}</span>}
   </div>
   <div class="code-copy">
     <button class="copy-btn" data-id="cp" data-copy-btn data-code={code}>
       <span data-id="copy-icon" class="btn-holder btn-icon-copy">
-        <Copy />
+        <Copy size={16} />
       </span>
 
       <span data-id="check-icon" class="btn-holder btn-icon-check">
-        <Check />
+        <Check size={16} />
       </span>
     </button>
   </div>

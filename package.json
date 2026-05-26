@@ -18,6 +18,8 @@
     "@astrojs/node": "^10.0.4",
     "@astrojs/rss": "^4.0.18",
     "@astrojs/svelte": "^8.0.4",
+    "@dev.icons/core": "^1.1.0",
+    "@lucide/astro": "^1.16.0",
     "@resvg/resvg-js": "^2.6.2",
     "astro": "^6.1.5",
     "geoip-lite": "^2.0.2",
