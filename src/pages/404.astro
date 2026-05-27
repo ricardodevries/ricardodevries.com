@@ -1,27 +1,266 @@
 ---
+import { ChartNoAxesColumn, House, Terminal } from "@lucide/astro";
+
+import Header from "@/components/Header.astro";
 import Layout from "../layouts/Layout.astro";
+
+const trace = [
+  ["router.resolve()", "returned null, then looked extremely productive"],
+  ["cache.get(path)", "found a sandwich from last deploy"],
+  ["pager.notify()", "marked as flaky and went back to sleep"],
+  ["human.nextStep()", "go somewhere that exists"],
+];
 ---
 
-<Layout title="404." is404={true}>
-  <section class="wrap">
-    <div class="flex flex-column">
-      <h1>
-        <span data-boom class="faded"
-        >Lorem Ipsum is simply dummy text of the printing and typesetting
-          industry.
-        </span>
-        <span>The void is calling.</span>
-        <span class="faded" data-boom
-        >Contrary to popular belief, Lorem Ipsum is not simply random text. It
-          has roots in a piece of classical Latin literature from 45 BC, making
-          it over 2000 years old.</span
-        >
+<Layout
+  title="404: Route not found"
+  description="This page could not be found."
+>
+  <Header />
+  <main class="wrap not-found" aria-labelledby="not-found-title">
+    <section class="not-found__intro">
+      <div class="not-found__status mono">HTTP 404</div>
+      <h1 id="not-found-title" class="not-found__title">
+        This route took a coffee break.
       </h1>
-      <div class="mt">
-        <a href="/">
-          <span> Go back home </span>
-        </a>
+      <p>
+        The server looked for this URL, checked `main`, blamed DNS for a second,
+        and then admitted it has no idea where the page went.
+      </p>
+    </section>
+
+    <section class="terminal-panel" aria-label="Debug log">
+      <div class="terminal-panel__header">
+        <div class="terminal-panel__controls" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <div class="terminal-panel__title mono">
+          <Terminal size={16} aria-hidden="true" />
+          missing-route.log
+        </div>
       </div>
-    </div>
-  </section>
+
+      <div class="terminal-panel__body mono">
+        <p><span class="prompt">$</span> curl --verbose {Astro.url.pathname}</p>
+        <p class="line-muted">Request failed with status code 404</p>
+        <ol>
+          {
+            trace.map(([call, result]) => (
+              <li>
+                <span>{call}</span>
+                <span>{result}</span>
+              </li>
+            ))
+          }
+        </ol>
+        <p class="line-success">Patch suggestion: abandon this URL with dignity.</p>
+      </div>
+    </section>
+
+    <nav class="not-found__actions" aria-label="404 recovery">
+      <a href="/">
+        <House size={16} aria-hidden="true" />
+        <span>Go home</span>
+      </a>
+      <a href="/analytics">
+        <ChartNoAxesColumn size={16} aria-hidden="true" />
+        <span>View analytics</span>
+      </a>
+    </nav>
+  </main>
 </Layout>
+
+<style lang="scss">
+  .not-found {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--gap) * 2);
+  }
+
+  .not-found__intro {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap);
+
+    .not-found__title {
+      margin: 0;
+      max-width: 14ch;
+      font-size: 4rem;
+      line-height: 0.95;
+      text-wrap: balance;
+    }
+
+    p {
+      max-width: 39rem;
+      margin: 0;
+      color: var(--subfaded-text);
+    }
+  }
+
+  .not-found__status {
+    width: fit-content;
+    padding: 2px 6px;
+    border: 1px solid var(--faded-line);
+    border-radius: var(--radius);
+    color: var(--faded-text);
+    font-size: var(--font-tiny);
+    line-height: 1.5;
+  }
+
+  .terminal-panel {
+    overflow: hidden;
+    border: 1px solid var(--code-border);
+    border-radius: var(--radius);
+    background: var(--code-bg);
+  }
+
+  .terminal-panel__header {
+    display: flex;
+    min-height: 46px;
+    align-items: center;
+    gap: var(--gap);
+    padding: 0 var(--gap);
+    border-bottom: 1px solid var(--code-border);
+  }
+
+  .terminal-panel__controls {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 6px;
+
+    span {
+      display: block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--faded-line);
+    }
+
+    span:nth-child(1) {
+      background: #ff5f57;
+    }
+
+    span:nth-child(2) {
+      background: #ffbd2e;
+    }
+
+    span:nth-child(3) {
+      background: #28c840;
+    }
+  }
+
+  .terminal-panel__title {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: calc(var(--gap) / 2);
+    color: var(--faded-text);
+    font-size: var(--font-small);
+    line-height: 1;
+  }
+
+  .terminal-panel__body {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--gap) * 0.8);
+    padding: var(--gap);
+    overflow-x: auto;
+    color: var(--code-text, var(--text));
+    font-size: var(--font-small);
+    line-height: 1.55;
+
+    p {
+      margin: 0;
+      white-space: nowrap;
+    }
+
+    ol {
+      display: grid;
+      gap: 4px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    li {
+      display: grid;
+      grid-template-columns: minmax(10rem, 0.85fr) minmax(16rem, 1fr);
+      gap: var(--gap);
+      min-width: 34rem;
+      padding-top: 4px;
+      border-top: 1px solid var(--faded-line);
+
+      span:first-child {
+        color: var(--shiki-token-function);
+      }
+
+      span:last-child {
+        color: var(--subfaded-text);
+      }
+    }
+  }
+
+  .prompt {
+    color: var(--shiki-token-string);
+  }
+
+  .line-muted {
+    color: var(--faded-text);
+  }
+
+  .line-success {
+    color: var(--diff-add-color);
+  }
+
+  .not-found__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--gap);
+
+    a {
+      display: inline-flex;
+      min-height: 40px;
+      align-items: center;
+      gap: calc(var(--gap) / 2);
+      padding: 0 12px;
+      border: 1px solid var(--faded-line);
+      border-radius: var(--radius);
+      background: var(--faded-bg);
+      line-height: 1;
+      transition:
+        border-color 0.2s ease,
+        background 0.2s ease;
+
+      &:hover {
+        border-color: var(--text);
+        background: transparent;
+      }
+
+      > span {
+        border: 0;
+      }
+    }
+  }
+
+  @media (max-width: 500px) {
+    .not-found__title {
+      max-width: 12ch;
+      font-size: 2.5rem;
+    }
+
+    .terminal-panel__body {
+      li {
+        grid-template-columns: 1fr;
+        gap: 0;
+        min-width: 20rem;
+      }
+    }
+
+    .not-found__actions a {
+      flex: 1 1 100%;
+      justify-content: center;
+    }
+  }
+</style>
