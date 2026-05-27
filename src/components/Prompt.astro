@@ -9,7 +9,7 @@ const { heroImageGenerator, prompt }: Props = Astro.props;
 ---
 
 <button class="fluid copy-btn" data-id="cp" data-copy-btn data-code={prompt}>
-  <span class="btn-text">Image prompt from MidJourney </span>
+  <span class="btn-text">Image prompt from {heroImageGenerator}</span>
   <span class="icon-holder">
     <span data-id="copy-icon" class="btn-holder btn-icon-copy">
       <Copy size={16} />
