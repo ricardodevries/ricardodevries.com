@@ -1,7 +1,7 @@
 ---
 import spriteMarkup from "@dev.icons/core/sprite?raw";
 import { getIcon, type IconRecord } from "@dev.icons/core";
-import { Check, Copy } from "@lucide/astro";
+import CopyButton from "./CopyButton.svelte";
 
 interface Props {
   code: string;
@@ -148,14 +148,6 @@ const codeIconLabel = langName ?? langIcon ?? lang;
     {title && <span class="mono small-text lh-1">{title}</span>}
   </div>
   <div class="code-copy">
-    <button class="copy-btn" data-id="cp" data-copy-btn data-code={code}>
-      <span data-id="copy-icon" class="btn-holder btn-icon-copy">
-        <Copy size={16} />
-      </span>
-
-      <span data-id="check-icon" class="btn-holder btn-icon-check">
-        <Check size={16} />
-      </span>
-    </button>
+    <CopyButton client:load text={code} />
   </div>
 </div>

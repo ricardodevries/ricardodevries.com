@@ -1,5 +1,5 @@
 ---
-import { Check, Copy } from "@lucide/astro";
+import CopyButton from "./CopyButton.svelte";
 
 interface Props {
   heroImageGenerator?: string;
@@ -7,16 +7,15 @@ interface Props {
 }
 
 const { heroImageGenerator, prompt }: Props = Astro.props;
+const label = heroImageGenerator
+  ? `Image prompt from ${heroImageGenerator}`
+  : "Image prompt";
 ---
 
-<button class="fluid copy-btn" data-id="cp" data-copy-btn data-code={prompt}>
-  <span class="btn-text">Image prompt from {heroImageGenerator}</span>
-  <span class="icon-holder">
-    <span data-id="copy-icon" class="btn-holder btn-icon-copy">
-      <Copy size={16} />
-    </span>
-    <span data-id="check-icon" class="btn-holder btn-icon-check">
-      <Check size={16} />
-    </span>
-  </span>
-</button>
+<CopyButton
+  client:load
+  ariaLabel={label}
+  fluid
+  label={label}
+  text={prompt}
+/>
