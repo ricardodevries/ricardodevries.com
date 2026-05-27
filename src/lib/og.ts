@@ -6,6 +6,7 @@ import ogTemplate from "./templates/og";
 function svgBufferToPngBuffer(svg: string) {
   const resvg = new Resvg(svg);
   const pngData = resvg.render();
+
   return pngData.asPng();
 }
 

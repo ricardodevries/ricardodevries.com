@@ -39,8 +39,10 @@
   const yTicks = $derived.by(() => {
     const count = maxVal < 4 ? maxVal + 1 : 5;
     const step = maxVal / (count - 1);
+
     return Array.from({ length: count }, (_, i) => {
       const val = Math.round((count - 1 - i) * step);
+
       return {
         val,
         y: PAD.top + (val === 0 ? iH : iH - (val / maxVal) * iH),

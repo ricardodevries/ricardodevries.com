@@ -4,47 +4,67 @@ import {
   isPageRequest,
   getClientIp,
   getGeoData,
-  trackPageView,
   computeFingerprint,
+  trackPageView,
   anonymizeOldFingerprints,
 } from "./lib/analytics";
 
-export const onRequest = defineMiddleware(async ({ request, url }, next) => {
-  anonymizeOldFingerprints();
+export const onRequest = defineMiddleware(
+  async ({ request, url, isPrerendered }, next) => {
+    const response = await next();
 
-  const userAgent = request.headers.get("user-agent");
-  const referrer = request.headers.get("referer");
-  const clientIp = getClientIp(request);
-  const response = await next();
+    if (isPrerendered) {
+      return response;
+    }
 
-  if (!userAgent) return response;
-  if (!isPageRequest(url)) return response;
-  if (url.pathname.startsWith("/analytics")) return response;
+    void anonymizeOldFingerprints();
 
-  const is404 = response.status === 404;
-  const botName = detectBot(userAgent);
-  const feedReader = !botName ? detectFeedReader(userAgent) : null;
-  const shouldTrack = botName || feedReader || is404;
+    const userAgent = request.headers.get("user-agent");
+    const referrer = request.headers.get("referer");
+    const clientIp = getClientIp(request);
 
-  if (!shouldTrack) return response;
-  if (!is404 && !response.ok) return response;
+    if (!userAgent) {
+      return response;
+    }
 
-  try {
-    const geo = getGeoData(clientIp);
-    const fingerprint = computeFingerprint(clientIp, userAgent);
-    const label = botName ?? feedReader;
-    const path = is404 ? `404:${url.pathname}` : url.pathname;
+    if (!isPageRequest(url)) {
+      return response;
+    }
 
-    await trackPageView({
-      path,
-      referrer,
-      botName: label,
-      fingerprint,
-      ...geo,
-    });
-  } catch (error) {
-    console.error("Tracking error:", error);
-  }
+    if (url.pathname.startsWith("/analytics")) {
+      return response;
+    }
 
-  return response;
-});
+    const is404 = response.status === 404;
+    const botName = detectBot(userAgent);
+    const feedReader = !botName ? detectFeedReader(userAgent) : null;
+    const shouldTrack = botName || feedReader || is404;
+
+    if (!shouldTrack) {
+      return response;
+    }
+
+    if (!is404 && !response.ok) {
+      return response;
+    }
+
+    try {
+      const geo = getGeoData(clientIp);
+      const fingerprint = computeFingerprint(clientIp, userAgent);
+      const label = botName ?? feedReader;
+      const path = is404 ? `404:${url.pathname}` : url.pathname;
+
+      await trackPageView({
+        path,
+        referrer,
+        botName: label,
+        fingerprint,
+        ...geo,
+      });
+    } catch (error) {
+      console.error("Tracking error:", error);
+    }
+
+    return response;
+  },
+);

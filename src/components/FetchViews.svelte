@@ -1,7 +1,11 @@
 <script>
   export let id;
+
   const fetchImage = (async () => {
-    const response = await fetch("/api/views?" + new URLSearchParams({ id }));
+    const response = await globalThis.fetch(
+      "/api/views?" + new globalThis.URLSearchParams({ id })
+    );
+
     return await response.json();
   })();
 </script>

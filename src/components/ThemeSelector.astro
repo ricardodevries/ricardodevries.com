@@ -64,61 +64,65 @@ import { Moon, Sun } from "@lucide/astro";
 </style>
 
 <script lang="ts" is:inline>
-  function setTheme(theme) {
-    const themeBtns = document.querySelectorAll("[data-toggle-theme]");
-    if (!themeBtns) return;
-    // remove all the data-theme attributes
-    themeBtns.forEach((btn) => {
-      btn.removeAttribute("data-toggle-theme-active");
-    });
+function setTheme(theme) {
+  const themeBtns = document.querySelectorAll("[data-toggle-theme]");
 
-    // find the button with the selected theme and add the data-theme attribute
-    const selected = document.querySelector(`[data-toggle-theme="${theme}"]`);
-    selected?.setAttribute("data-toggle-theme-active", "selected");
-  }
-  function switchTheme() {
-    const themes = ["dark", "light"];
-
-    const key = "v-for";
-    const themeBtns = document.querySelectorAll("[data-toggle-theme]");
-    const doc = document.documentElement;
-
-    const store = (selected) => {
-      doc.setAttribute("data-theme", selected);
-      localStorage.setItem(key, selected);
-    };
-
-    const fromLocal = localStorage.getItem(key) ?? themes[0];
-
-    const dark = window.matchMedia("(darkers-color-scheme: dark)").matches;
-    const light = window.matchMedia("(darkers-color-scheme: light)").matches;
-
-    if (!fromLocal && dark) {
-      store("dark");
-    } else if (!fromLocal && light) {
-      store("light");
-    } else if (fromLocal) {
-      store(fromLocal);
-      setTheme(fromLocal);
-    }
-
-    if (themeBtns) {
-      themeBtns.forEach((btn) => {
-        btn.addEventListener("click", (e) => {
-          e.preventDefault();
-          const selected = btn.getAttribute("data-toggle-theme");
-          store(selected);
-          setTheme(selected);
-        });
-      });
-    }
+  if (!themeBtns) {
+    return;
   }
 
-  (function run() {
-    switchTheme();
-  })();
-
-  document.addEventListener("astro:page-load", () => {
-    switchTheme();
+  // remove all the data-theme attributes
+  themeBtns.forEach((btn) => {
+    btn.removeAttribute("data-toggle-theme-active");
   });
+
+  // find the button with the selected theme and add the data-theme attribute
+  const selected = document.querySelector(`[data-toggle-theme="${theme}"]`);
+  selected?.setAttribute("data-toggle-theme-active", "selected");
+}
+function switchTheme() {
+  const themes = ["dark", "light"];
+
+  const key = "v-for";
+  const themeBtns = document.querySelectorAll("[data-toggle-theme]");
+  const doc = document.documentElement;
+
+  const store = (selected) => {
+    doc.setAttribute("data-theme", selected);
+    localStorage.setItem(key, selected);
+  };
+
+  const fromLocal = localStorage.getItem(key) ?? themes[0];
+
+  const dark = window.matchMedia("(darkers-color-scheme: dark)").matches;
+  const light = window.matchMedia("(darkers-color-scheme: light)").matches;
+
+  if (!fromLocal && dark) {
+    store("dark");
+  } else if (!fromLocal && light) {
+    store("light");
+  } else if (fromLocal) {
+    store(fromLocal);
+    setTheme(fromLocal);
+  }
+
+  if (themeBtns) {
+    themeBtns.forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        const selected = btn.getAttribute("data-toggle-theme");
+        store(selected);
+        setTheme(selected);
+      });
+    });
+  }
+}
+
+(function run() {
+  switchTheme();
+})();
+
+document.addEventListener("astro:page-load", () => {
+  switchTheme();
+});
 </script>

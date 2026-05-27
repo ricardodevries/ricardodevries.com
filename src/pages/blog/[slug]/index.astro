@@ -31,7 +31,10 @@ const { post, pageNum } = Astro.props as {
   pageNum?: number;
 };
 
-let pagination;
+type Pagination = ReturnType<typeof getPagination<CollectionEntry<"blog">>>;
+
+let pagination: Pagination | undefined;
+
 if (pageNum !== undefined) {
   const posts = await getCollection("blog");
   const sortedPosts = getSortedPosts(posts);

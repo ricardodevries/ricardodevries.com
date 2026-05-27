@@ -1,10 +1,11 @@
 import { createHighlighter } from "shiki";
-import { createCssVariablesTheme } from "shiki";
 import { transformers, vorillazTheme } from "../../config/plugins";
 
-let highlighter;
+type Highlighter = Awaited<ReturnType<typeof createHighlighter>>;
 
-export async function create() {
+let highlighter: Highlighter | undefined;
+
+export async function create(): Promise<Highlighter> {
   if (!highlighter) {
     highlighter = await createHighlighter({
       themes: [vorillazTheme],
@@ -22,11 +23,13 @@ export async function create() {
       ],
     });
   }
+
   return highlighter;
 }
 
 export async function codeToHtml(code: string, lang: string) {
   const highlighter = await create();
+
   return highlighter.codeToHtml(code, {
     lang: lang ? lang : "javascript",
     theme: "vorillaz",

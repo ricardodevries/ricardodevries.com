@@ -7,7 +7,7 @@ export const GET: APIRoute = async ({ request, site }) => {
   const params = new URLSearchParams(url.search);
 
   const data = {
-    title: params.get("title"),
+    title: params.get("title") ?? "",
   };
 
   const { title } = data;
@@ -17,7 +17,7 @@ export const GET: APIRoute = async ({ request, site }) => {
       await ogImage({
         title: title as string,
         origin: url.origin,
-        siteName: site?.hostname!,
+        siteName: site?.hostname ?? url.hostname,
       })
     ),
     {
