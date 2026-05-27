@@ -8,7 +8,7 @@ import db from "@astrojs/db";
 
 // https://astro.build/config
 export default defineConfig({
-  site: "https://vorillaz.com",
+  site: "https://ricardodevries.com",
   prefetch: true,
   markdown: {
     smartypants: true,
