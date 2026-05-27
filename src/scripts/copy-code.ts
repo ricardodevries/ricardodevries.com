@@ -1,3 +1,7 @@
+interface LegacyClipboardDocument {
+  execCommand(commandId: string): boolean;
+}
+
 function domCopy(text: string) {
   const pre = document.createElement("pre");
   Object.assign(pre.style, {
@@ -19,18 +23,20 @@ function domCopy(text: string) {
   const range = document.createRange();
   range.selectNode(pre);
   const selection = getSelection();
-  if (!selection) return false;
+
+  if (!selection) {
+    return false;
+  }
+
   selection.removeAllRanges();
   selection.addRange(range);
 
-  let ok = false;
   try {
-    ok = document.execCommand("copy");
+    return (document as unknown as LegacyClipboardDocument).execCommand("copy");
   } finally {
     selection.removeAllRanges();
     document.body.removeChild(pre);
   }
-  return ok;
 }
 
 async function clickHandler(event: Event) {
@@ -40,10 +46,14 @@ async function clickHandler(event: Event) {
   try {
     await navigator.clipboard.writeText(code);
   } catch (err) {
-    domCopy(code);
+    if (!domCopy(code)) {
+      console.error("Could not copy code block:", err);
+
+      return;
+    }
   }
 
-  let checkmark: HTMLSpanElement | null = button.querySelector(
+  const checkmark: HTMLSpanElement | null = button.querySelector(
     ".copy-code-checkmark"
   );
 
@@ -65,7 +75,10 @@ async function clickHandler(event: Event) {
 // Define a function that searches a node for matching buttons and initializes them
 // unless the node does not support querySelectorAll (e.g. a text node)
 const initButtons = (container: ParentNode | Document) => {
-  if (!container.querySelectorAll) return;
+  if (!container.querySelectorAll) {
+    return;
+  }
+
   container
     .querySelectorAll("[data-copy-btn]")
     .forEach((btn) => btn.addEventListener("click", clickHandler));
@@ -88,5 +101,4 @@ document.addEventListener("astro:page-load", () => {
   initButtons(document);
 });
 
-// @ts-ignore
-globalThis.domCopy = clickHandler;
+Reflect.set(globalThis, "domCopy", clickHandler);

@@ -10,6 +10,7 @@ export interface Props {
     description?: string;
   };
 }
+
 const { frontmatter, title, description } = Astro.props;
 const pageTitle = title ?? frontmatter?.title ?? "";
 const pageDescription = description ?? frontmatter?.description;

@@ -34,6 +34,7 @@ export const POST: APIRoute = async ({ request }) => {
     >;
 
     const path = sanitizePath(rawPath as string);
+
     if (!path) {
       return new Response(
         JSON.stringify({ error: "Invalid or missing path parameter" }),
@@ -61,6 +62,7 @@ export const POST: APIRoute = async ({ request }) => {
     });
   } catch (error) {
     console.error("Analytics error:", error);
+
     return new Response(
       JSON.stringify({ error: "Internal server error" }),
       { status: 500, headers: { "content-type": "application/json" } }

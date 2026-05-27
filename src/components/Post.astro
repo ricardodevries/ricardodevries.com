@@ -12,6 +12,7 @@ import Prompt from "./Prompt.astro";
 export interface Props {
   post: CollectionEntry<"blog">;
 }
+
 const { post } = Astro.props;
 const { Content } = await render(post);
 const {
@@ -37,7 +38,7 @@ const updatedstr = updatedDate?.toISOString();
   keywords={keywords}
   metaDescription={metaDescription}
 >
-  <article id="article" role="article" class="content">
+  <article id="article" class="content">
     <h1 transition:name={slugify(title)} class="post-title">{title}</h1>
     <!-- Date and time -->
     <div class="post-info article-info gap-1 full">

@@ -105,16 +105,27 @@ const FEED_READER_PATTERNS: { pattern: RegExp; name: string }[] = [
 ];
 
 export function detectFeedReader(userAgent: string | null): string | null {
-  if (!userAgent) return null;
-  for (const { pattern, name } of FEED_READER_PATTERNS) {
-    if (pattern.test(userAgent)) return name;
+  if (!userAgent) {
+    return null;
   }
+
+  for (const { pattern, name } of FEED_READER_PATTERNS) {
+    if (pattern.test(userAgent)) {
+      return name;
+    }
+  }
+
   return null;
 }
 
 export function detectBot(userAgent: string | null): string | null {
-  if (!userAgent) return null;
-  if (!isbot(userAgent)) return null;
+  if (!userAgent) {
+    return null;
+  }
+
+  if (!isbot(userAgent)) {
+    return null;
+  }
 
   for (const { pattern, name } of BOT_PATTERNS) {
     if (pattern.test(userAgent)) {
@@ -123,17 +134,26 @@ export function detectBot(userAgent: string | null): string | null {
   }
 
   const botMatch = userAgent.match(/([a-zA-Z][a-zA-Z0-9_-]*[Bb]ot)/);
-  if (botMatch?.[1]) return botMatch[1];
+
+  if (botMatch?.[1]) {
+    return botMatch[1];
+  }
 
   const crawlerMatch = userAgent.match(
     /([a-zA-Z][a-zA-Z0-9_-]*[Cc]rawler)/i
   );
-  if (crawlerMatch?.[1]) return crawlerMatch[1];
+
+  if (crawlerMatch?.[1]) {
+    return crawlerMatch[1];
+  }
 
   const spiderMatch = userAgent.match(
     /([a-zA-Z][a-zA-Z0-9_-]*[Ss]pider)/i
   );
-  if (spiderMatch?.[1]) return spiderMatch[1];
+
+  if (spiderMatch?.[1]) {
+    return spiderMatch[1];
+  }
 
   return "Other Bot";
 }

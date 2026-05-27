@@ -61,14 +61,18 @@ const getExistingIconSlug = (candidate: string): string | null => {
     : [`${candidate}-icon`, candidate];
 
   for (const slug of candidates) {
-    if (getIcon(slug)) return slug;
+    if (getIcon(slug)) {
+      return slug;
+    }
   }
 
   return null;
 };
 
 const getTitleIconCandidates = (title?: string | null): string[] => {
-  if (!title) return [];
+  if (!title) {
+    return [];
+  }
 
   const normalizedTitle = normalizeIconSlug(title);
   const extension = title.match(/\.([a-z0-9]+)$/i)?.[1];
@@ -90,10 +94,15 @@ const getIconSlug = (lang: string, title?: string | null): string | null => {
   ];
 
   for (const candidate of candidates) {
-    if (!candidate) continue;
+    if (!candidate) {
+      continue;
+    }
 
     const iconSlug = getExistingIconSlug(candidate);
-    if (iconSlug) return iconSlug;
+
+    if (iconSlug) {
+      return iconSlug;
+    }
   }
 
   return null;
@@ -103,7 +112,10 @@ const getIconSymbol = (name: string): DevIconSymbol | null => {
   const symbolMatch = spriteMarkup.match(
     new RegExp(`<symbol([^>]*\\sid="${name}"[^>]*)>([\\s\\S]*?)<\\/symbol>`)
   );
-  if (!symbolMatch) return null;
+
+  if (!symbolMatch) {
+    return null;
+  }
 
   return {
     content: symbolMatch[2],

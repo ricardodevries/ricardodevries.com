@@ -1,18 +1,19 @@
-import type { PhrasingContent, Paragraph, Code } from "mdast";
+import type { PhrasingContent, Paragraph, Code, Root as MdastRoot } from "mdast";
 import type { Properties, Result } from "hastscript";
 import type { Transformer, Plugin } from "unified";
-import type { Parent, Node } from "unist";
-import type { RemarkPlugins } from "astro";
+import type { Parent } from "unist";
+import type { Element, Root as HastRoot } from "hast";
 
 import { visit } from "unist-util-visit";
 import { h as _h } from "hastscript";
 
-let h = (
+const h = (
   el: string,
   attrs: Properties = {},
   children: unknown[] = []
 ): Paragraph => {
-  let { properties, tagName } = _h(el, attrs);
+  const { properties, tagName } = _h(el, attrs);
+
   return {
     data: { hProperties: properties, hName: tagName },
     children: children as PhrasingContent[],
@@ -21,7 +22,7 @@ let h = (
 };
 
 const getLanguageName = (lang: string): string => {
-  let languages: {
+  const languages: {
     [key: string]: undefined | string;
   } = {
     tsx: "React / TypeScript",
@@ -49,15 +50,19 @@ const getLanguageName = (lang: string): string => {
 };
 
 const parseMetaBlock = (meta: string) => {
-  if (!meta) return { title: null, meta: "", icon: null };
+  if (!meta) {
+    return { title: null, meta: "", icon: null };
+  }
+
   const titleMatch = meta.match(/title="([^"]*)"/);
   const title = titleMatch?.[1] ?? null;
   meta = meta.replace(titleMatch?.[0] ?? "", "");
+
   return { title, meta };
 };
 
-export const singleLineCodeBlock = () => (tree: any) => {
-  visit(tree, "element", (node: any) => {
+export const singleLineCodeBlock: Plugin<[], HastRoot> = () => (tree) => {
+  visit(tree, "element", (node: Element) => {
     if (node.tagName === "code") {
       // if no properties then it's a single backtick code block
       if (!node.properties || Object.keys(node?.properties).length === 0) {
@@ -69,8 +74,12 @@ export const singleLineCodeBlock = () => (tree: any) => {
   });
 };
 
-export const codeBlock: Plugin<[]> = (): Transformer => (tree: Node) => {
-  visit(tree, "code", (node: Code, index: number, parent: Parent) => {
+export const codeBlock: Plugin<[], MdastRoot> = (): Transformer<MdastRoot> => (tree) => {
+  visit(tree, "code", (node: Code, index: number | undefined, parent: Parent | undefined) => {
+    if (typeof index !== "number" || !parent) {
+      return;
+    }
+
     const { lang, meta = "" } = node as Code;
     const { title } = parseMetaBlock(meta as string);
     const html = h(

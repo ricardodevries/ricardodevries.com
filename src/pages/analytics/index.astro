@@ -34,11 +34,18 @@ interface Row {
 
 let rows: Row[] = [];
 let prevRows: Row[] = [];
+type DbCondition = Parameters<typeof and>[number];
 
 try {
-  const conditions = [];
-  if (rangeStart) conditions.push(gte(Analytics.date, rangeStart));
-  if (pathFilter) conditions.push(eq(Analytics.path, pathFilter));
+  const conditions: DbCondition[] = [];
+
+  if (rangeStart) {
+    conditions.push(gte(Analytics.date, rangeStart));
+  }
+
+  if (pathFilter) {
+    conditions.push(eq(Analytics.path, pathFilter));
+  }
 
   rows = await db
     .select()
@@ -50,7 +57,10 @@ try {
       gte(Analytics.date, prevStart),
       sql`${Analytics.date} < ${rangeStart}`,
     ];
-    if (pathFilter) prevConditions.push(eq(Analytics.path, pathFilter));
+
+    if (pathFilter) {
+      prevConditions.push(eq(Analytics.path, pathFilter));
+    }
 
     prevRows = await db
       .select()
@@ -76,11 +86,20 @@ function groupUnique<R>(
   const groups = new Map<string, { first: Row; keys: Set<string> }>();
   for (const r of rows) {
     const key = keyFn(r);
-    if (key === null) continue;
+
+    if (key === null) {
+      continue;
+    }
+
     const g = groups.get(key);
-    if (g) g.keys.add(visitorKey(r));
-    else groups.set(key, { first: r, keys: new Set([visitorKey(r)]) });
+
+    if (g) {
+      g.keys.add(visitorKey(r));
+    } else {
+      groups.set(key, { first: r, keys: new Set([visitorKey(r)]) });
+    }
   }
+
   return Array.from(groups.values()).map((g) => ({
     ...initFn(g.first),
     total: g.keys.size,
@@ -95,11 +114,20 @@ function groupCount<R>(
   const groups = new Map<string, R & { total: number }>();
   for (const r of rows) {
     const key = keyFn(r);
-    if (key === null) continue;
+
+    if (key === null) {
+      continue;
+    }
+
     const existing = groups.get(key);
-    if (existing) existing.total++;
-    else groups.set(key, { ...initFn(r), total: 1 });
+
+    if (existing) {
+      existing.total++;
+    } else {
+      groups.set(key, { ...initFn(r), total: 1 });
+    }
   }
+
   return Array.from(groups.values());
 }
 
@@ -110,6 +138,7 @@ function topN<T extends { total: number }>(items: T[], n: number): T[] {
 const fmtDate = (d: Date): string => {
   const day = d.getDate().toString().padStart(2, "0");
   const mon = new Intl.DateTimeFormat("en", { month: "short" }).format(d);
+
   return `${day} ${mon}`;
 };
 
@@ -132,6 +161,7 @@ function buildDateSeries(
     result.push(map.get(key) ?? { date: key, total: 0 });
     cursor.setDate(cursor.getDate() + 1);
   }
+
   return result;
 }
 
@@ -140,7 +170,10 @@ const visitorsDateData = buildDateSeries(humanRows, groupUnique, chartStart, now
 const viewsDateData = buildDateSeries(humanRows, groupCount, chartStart, now);
 
 const normalizeRef = (r: string | null): string => {
-  if (!r) return "";
+  if (!r) {
+    return "";
+  }
+
   return r.includes("ricardodevries.com")
     ? "https://ricardodevries.com"
     : r;
@@ -183,9 +216,16 @@ const prevVisitors = new Set(prevHumanRows.map(visitorKey)).size;
 const prevBots = prevBotRows.length;
 
 function delta(current: number, previous: number): string | null {
-  if (!prevStart) return null;
+  if (!prevStart) {
+    return null;
+  }
+
   const diff = current - previous;
-  if (diff === 0) return null;
+
+  if (diff === 0) {
+    return null;
+  }
+
   return diff > 0 ? `+${diff}` : `${diff}`;
 }
 
@@ -214,8 +254,11 @@ try {
 
 let recentRows: Row[] = [];
 try {
-  const conditions = [];
-  if (pathFilter) conditions.push(eq(Analytics.path, pathFilter));
+  const conditions: DbCondition[] = [];
+
+  if (pathFilter) {
+    conditions.push(eq(Analytics.path, pathFilter));
+  }
 
   recentRows = await db
     .select()
@@ -239,16 +282,28 @@ const fmtTime = (d: Date): string => {
 
 function rangeUrl(r: string): string {
   const params = new URLSearchParams();
-  if (r !== "30d") params.set("range", r);
-  if (pathFilter) params.set("path", pathFilter);
+
+  if (r !== "30d") {
+    params.set("range", r);
+  }
+
+  if (pathFilter) {
+    params.set("path", pathFilter);
+  }
+
   const qs = params.toString();
+
   return `/analytics${qs ? `?${qs}` : ""}`;
 }
 
 function pathUrl(path: string): string {
   const params = new URLSearchParams();
   params.set("path", path);
-  if (range !== "30d") params.set("range", range);
+
+  if (range !== "30d") {
+    params.set("range", range);
+  }
+
   return `/analytics?${params.toString()}`;
 }
 

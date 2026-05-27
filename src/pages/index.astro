@@ -4,6 +4,7 @@ export const prerender = true;
 import { type CollectionEntry } from "astro:content";
 import { getPosts, getPagination, getSortedPosts } from "../lib/posts";
 import Posts from "@/components/Posts.astro";
+
 const posts = await getPosts();
 const sortedPosts = getSortedPosts(posts);
 

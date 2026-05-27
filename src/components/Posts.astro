@@ -10,7 +10,7 @@ export interface Props {
   currentPage?: number;
   totalPages?: number;
   paginatedPosts: CollectionEntry<"blog">[];
-  buildHref?: (entry: { data: any; id: string }) => string;
+  buildHref?: (entry: Pick<CollectionEntry<"blog">, "data" | "id">) => string;
 }
 
 const {

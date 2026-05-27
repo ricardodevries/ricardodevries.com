@@ -1,5 +1,6 @@
-// @ts-nocheck
-import type { RehypePlugins } from "astro";
+import type { RehypePlugins, RemarkPlugins } from "astro";
+import type { ShikiTransformer } from "shiki";
+
 import rehypeExternalLinks from "rehype-external-links";
 import { createCssVariablesTheme } from "shiki/core";
 
@@ -17,7 +18,7 @@ import {
 import { codeBlock, singleLineCodeBlock } from "./code";
 import { wrapLinkContent } from "./link";
 
-export const remarkPlugins = [codeBlock];
+export const remarkPlugins: RemarkPlugins = [codeBlock];
 
 export const vorillazTheme = createCssVariablesTheme({
   name: "vorillaz",
@@ -26,7 +27,7 @@ export const vorillazTheme = createCssVariablesTheme({
   fontStyle: true,
 });
 
-export const transformers = [
+export const transformers: ShikiTransformer[] = [
   transformerMetaHighlight({
     className: "has-highlight",
   }),
@@ -36,6 +37,7 @@ export const transformers = [
       if (code.endsWith("\n")) {
         return code.slice(0, -1);
       }
+
       return code;
     },
   },

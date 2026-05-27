@@ -1,6 +1,7 @@
 ---
 import { Eye } from "@lucide/astro";
 import FetchViews from "./FetchViews.svelte";
+
 interface Props {
   id: string;
 }
@@ -10,5 +11,5 @@ const { id } = Astro.props;
 
 <span class="flex gap-half">
   <Eye size={12} />
-  <FetchViews client:only id={id} />
+  <FetchViews client:only="svelte" id={id} />
 </span>
