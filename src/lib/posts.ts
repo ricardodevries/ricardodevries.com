@@ -16,11 +16,6 @@ export async function getPosts() {
   return posts;
 }
 
-export const getLatestPost = async () => {
-  const posts = await getPosts();
-  return posts[0];
-};
-
 export const getPageNumbers = (numberOfPosts: number) => {
   const numberOfPages = numberOfPosts / Number(postPerPage);
 

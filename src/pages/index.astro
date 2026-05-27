@@ -1,10 +1,17 @@
 ---
-import Layout from "../layouts/Layout.astro";
-import Landing from "@/components/Landing.astro";
+export const prerender = true;
+
+import { type CollectionEntry } from "astro:content";
+import { getPosts, getPagination, getSortedPosts } from "../lib/posts";
+import Posts from "@/components/Posts.astro";
+const posts = await getPosts();
+const sortedPosts = getSortedPosts(posts);
+
+const pagination = getPagination<CollectionEntry<"blog">>({
+  posts: sortedPosts as CollectionEntry<"blog">[],
+  page: 1,
+  isIndex: true,
+});
 ---
 
-<Layout title="Welcome">
-  <section class="main-center">
-    <Landing />
-  </section>
-</Layout>
+<Posts {...pagination} />
