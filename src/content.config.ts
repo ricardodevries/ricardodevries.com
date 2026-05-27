@@ -2,24 +2,6 @@ import { defineCollection } from "astro:content";
 import { z } from "astro/zod";
 import { glob } from "astro/loaders";
 
-const talks = defineCollection({
-  loader: glob({ base: "src/content/talks", pattern: "**/*.{md,mdx,yaml,json}" }),
-  schema: z.object({
-    title: z.string(),
-    country: z.string(),
-    city: z.string().optional(),
-    date: z.date(),
-    upcoming: z.boolean().optional().default(false),
-    url: z.string().optional(),
-    conference: z.string().optional(),
-    previewVideoUrl: z.string().optional(),
-    videoUrl: z.string().optional(),
-    ticketUrl: z.string().optional(),
-    slides: z.string().optional(),
-    lang: z.enum(["en", "gr"]).optional(),
-  }),
-});
-
 const blog = defineCollection({
   loader: glob({ base: "src/content/blog", pattern: "**/*.{md,mdx}" }),
   schema: z.object({
@@ -49,4 +31,4 @@ const blog = defineCollection({
   }),
 });
 
-export const collections = { blog, talks };
+export const collections = { blog };

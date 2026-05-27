@@ -10,10 +10,12 @@ export interface Props {
     description?: string;
   };
 }
-const { frontmatter, title } = Astro.props;
+const { frontmatter, title, description } = Astro.props;
+const pageTitle = title ?? frontmatter?.title ?? "";
+const pageDescription = description ?? frontmatter?.description;
 ---
 
-<Layout title={`${title ?? frontmatter?.title}`}>
+<Layout title={pageTitle} description={pageDescription}>
   <Header />
   <main class="wrap">
     <div class="content single">

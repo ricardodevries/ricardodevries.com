@@ -1,6 +1,5 @@
 ---
 import ThemeSelector from "./ThemeSelector.astro";
-import Social from "./Social.astro";
 const today = new Date();
 ---
 
@@ -10,10 +9,9 @@ const today = new Date();
   >
     <div class="flex center gap-half flex-center">
       <div class="copy flex">
-        &copy; {today.getFullYear()}.
+        &copy; {today.getFullYear()}
       </div>
       <span class="dot"></span>
-      <Social />
       <a href="/analytics">Analytics</a>
       <span class="dot"></span>
       <a href="/privacy">Privacy</a>
