@@ -1,44 +1,36 @@
 ---
 import type { CollectionEntry } from "astro:content";
-import Icons from "@/components/icons/Icons.astro";
 import PostLayout from "@/layouts/PostLayout.astro";
 import Pagination from "./Pagination.astro";
 import { toShortDateString } from "@/lib/date";
 
 export interface Props {
   title?: string;
-  icon?: string;
   description?: string;
   currentPage?: number;
   totalPages?: number;
-  isPosts?: boolean;
-  paginatedPosts: CollectionEntry<"blog">[] | CollectionEntry<"generative">[];
+  paginatedPosts: CollectionEntry<"blog">[];
+  buildHref?: (entry: { data: any; id: string }) => string;
 }
+
 const {
   currentPage,
   totalPages,
   paginatedPosts,
   title: t,
-  icon,
   description,
+  buildHref,
 } = Astro.props;
-const title = t
-  ? t
-  : currentPage && currentPage < 2
-    ? "Writing."
-    : `Writing. - Page ${currentPage}`;
-const heading = t ? t : "Writing.";
 
+const title = t ? t : currentPage && currentPage < 2 ? "Blog" : `Blog - Page ${currentPage}`;
+const heading = t ? t : "Blog";
 const clx = title && description ? "mb" : "mb-2";
-const headingClass = clx + " flex align-center gap-1";
+const headingClass = clx;
 ---
 
 <PostLayout title={title} description={description}>
   <div>
-    <h1 class={headingClass}>
-      <Icons icon={icon} />
-      <span>{heading}</span>
-    </h1>
+    <h1 class={headingClass}>{heading}</h1>
     {description && <div class="faded mb-2">{description}</div>}
 
     <ul class="flex flex-column gap-2 no-list sm-only-gap-1">
@@ -46,7 +38,7 @@ const headingClass = clx + " flex align-center gap-1";
         paginatedPosts.map(({ data, id }) => (
           <li class="flex gap-half flex-column">
             <div class="flex space-between align-top gap-1 sm-flex-column sm-only-gap-fifth">
-              <a href={`/blog/${id}`} data-astro-prefetch="viewport">
+              <a href={buildHref ? buildHref({ data, id }) : `/blog/${id}`} data-astro-prefetch="viewport">
                 <span>{data.title}</span>
               </a>
               <time class="post-info sm-ml-0">
