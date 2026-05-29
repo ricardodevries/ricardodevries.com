@@ -4,11 +4,11 @@ import { glob } from "astro/loaders";
 
 const blog = defineCollection({
   loader: glob({ base: "src/content/blog", pattern: "**/*.{md,mdx}" }),
-  schema: z.object({
+  schema: ({ image }) => z.object({
     title: z.string(),
     description: z.string(),
     metaDescription: z.string().optional(),
-    heroImage: z.string().optional(),
+    heroImage: image().optional(),
     prompt: z.string().optional(),
     heroImageGenerator: z.enum(["unsplash", "midjourney"]).optional(),
     categories: z.array(z.string()).optional(),
