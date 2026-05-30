@@ -9,6 +9,14 @@ import db from "@astrojs/db";
 // https://astro.build/config
 export default defineConfig({
   site: "https://ricardodevries.com",
+  security: {
+    allowedDomains: [
+      {
+        hostname: "ricardodevries.com",
+        protocol: "https",
+      },
+    ],
+  },
   prefetch: true,
   markdown: {
     smartypants: true,
