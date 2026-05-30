@@ -38,7 +38,7 @@ const headingClass = clx;
         paginatedPosts.map(({ data, id }) => (
           <li class="flex gap-half flex-column">
             <div class="flex space-between align-top gap-1 sm-flex-column sm-only-gap-fifth">
-              <a href={buildHref ? buildHref({ data, id }) : `/blog/${id}`} data-astro-prefetch="viewport">
+              <a href={buildHref ? buildHref({ data, id }) : `/blog/${id}`} data-astro-prefetch="hover">
                 <span>{data.title}</span>
               </a>
               <time class="post-info sm-ml-0">
