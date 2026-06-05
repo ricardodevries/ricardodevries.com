@@ -15,7 +15,7 @@ const next = currentPage < totalPages ? "" : "disabled";
 <div class="mt">
   {
     totalPages > 1 && (
-      <nav aria-label="Pagination" class="flex gap-1 small-text">
+      <nav aria-label="Pagination" class="pagination flex gap-1 small-text">
         {prev === "disabled" && <span aria-disabled>Previous</span>}
         {prev !== "disabled" && (
           <a
@@ -37,12 +37,3 @@ const next = currentPage < totalPages ? "" : "disabled";
     )
   }
 </div>
-
-<style lang="scss">
-  nav {
-    [aria-disabled] {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-  }
-</style>
