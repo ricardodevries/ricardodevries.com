@@ -311,185 +311,187 @@ const rangeLabel = days ? `Last ${days} days` : "All time";
 ---
 
 <PostLayout title="Analytics" description="Site analytics">
-  <h1>
-    Analytics
-    {pathFilter && (
-      <span class="path-filter">
-        <a href={rangeUrl(range)} class="clear-filter" aria-label="Clear path filter">&times;</a>
-        {pathFilter}
-      </span>
+  <div class="analytics-page">
+    <h1>
+      Analytics
+      {pathFilter && (
+        <span class="path-filter">
+          <a href={rangeUrl(range)} class="clear-filter" aria-label="Clear path filter">&times;</a>
+          {pathFilter}
+        </span>
+      )}
+    </h1>
+
+    <nav class="range-nav" aria-label="Time range">
+      {Object.keys(RANGES).map((r) => (
+        <a
+          href={rangeUrl(r)}
+          class:list={["range-link", { active: r === range }]}
+          aria-current={r === range ? "page" : undefined}
+        >
+          {r}
+        </a>
+      ))}
+    </nav>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-value">{allTimeHuman.toLocaleString()}</span>
+        <span class="stat-label">All-time views</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">
+          {uniqueVisitors.toLocaleString()}
+        </span>
+        {delta(uniqueVisitors, prevVisitors) && (
+          <span class:list={["stat-delta", { positive: uniqueVisitors > prevVisitors, negative: uniqueVisitors < prevVisitors }]}>
+            {delta(uniqueVisitors, prevVisitors)}
+          </span>
+        )}
+        <span class="stat-label">Visitors</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">
+          {totalViews.toLocaleString()}
+        </span>
+        {delta(totalViews, prevViews) && (
+          <span class:list={["stat-delta", { positive: totalViews > prevViews, negative: totalViews < prevViews }]}>
+            {delta(totalViews, prevViews)}
+          </span>
+        )}
+        <span class="stat-label">Views</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">
+          {totalBots.toLocaleString()}
+        </span>
+        {delta(totalBots, prevBots) && (
+          <span class:list={["stat-delta", { positive: totalBots > prevBots, negative: totalBots < prevBots }]}>
+            {delta(totalBots, prevBots)}
+          </span>
+        )}
+        <span class="stat-label">Bot visits</span>
+      </div>
+    </div>
+
+    {yearlyData.length > 1 && !pathFilter && (
+      <section class="section">
+        <h2>Yearly</h2>
+        <ul class="no-list">
+          {yearlyData.map((y) => (
+            <li class="lined row">
+              <span>{y.year}</span>
+              <span class="row-count">{y.total.toLocaleString()}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
     )}
-  </h1>
 
-  <nav class="range-nav" aria-label="Time range">
-    {Object.keys(RANGES).map((r) => (
-      <a
-        href={rangeUrl(r)}
-        class:list={["range-link", { active: r === range }]}
-        aria-current={r === range ? "page" : undefined}
-      >
-        {r}
-      </a>
-    ))}
-  </nav>
-
-  <div class="stats-grid">
-    <div class="stat-card">
-      <span class="stat-value">{allTimeHuman.toLocaleString()}</span>
-      <span class="stat-label">All-time views</span>
-    </div>
-    <div class="stat-card">
-      <span class="stat-value">
-        {uniqueVisitors.toLocaleString()}
-      </span>
-      {delta(uniqueVisitors, prevVisitors) && (
-        <span class:list={["stat-delta", { positive: uniqueVisitors > prevVisitors, negative: uniqueVisitors < prevVisitors }]}>
-          {delta(uniqueVisitors, prevVisitors)}
-        </span>
-      )}
-      <span class="stat-label">Visitors</span>
-    </div>
-    <div class="stat-card">
-      <span class="stat-value">
-        {totalViews.toLocaleString()}
-      </span>
-      {delta(totalViews, prevViews) && (
-        <span class:list={["stat-delta", { positive: totalViews > prevViews, negative: totalViews < prevViews }]}>
-          {delta(totalViews, prevViews)}
-        </span>
-      )}
-      <span class="stat-label">Views</span>
-    </div>
-    <div class="stat-card">
-      <span class="stat-value">
-        {totalBots.toLocaleString()}
-      </span>
-      {delta(totalBots, prevBots) && (
-        <span class:list={["stat-delta", { positive: totalBots > prevBots, negative: totalBots < prevBots }]}>
-          {delta(totalBots, prevBots)}
-        </span>
-      )}
-      <span class="stat-label">Bot visits</span>
-    </div>
-  </div>
-
-  {yearlyData.length > 1 && !pathFilter && (
-    <section class="section">
-      <h2>Yearly</h2>
-      <ul class="no-list">
-        {yearlyData.map((y) => (
-          <li class="lined row">
-            <span>{y.year}</span>
-            <span class="row-count">{y.total.toLocaleString()}</span>
-          </li>
-        ))}
-      </ul>
-    </section>
-  )}
-
-  {
-    rows.length > 0 ? (
-      <Fragment>
-        <section class="section">
-          <h2>Unique Visitors</h2>
-          <p class="faded section-sub">{rangeLabel}</p>
-          <ChartTotalVisits client:load data={visitorsDateData} />
-        </section>
-
-        <section class="section">
-          <h2>Views</h2>
-          <p class="faded section-sub">{rangeLabel}</p>
-          <ChartTotalVisits client:load data={viewsDateData} />
-        </section>
-
-        <div class="two-col">
+    {
+      rows.length > 0 ? (
+        <Fragment>
           <section class="section">
-            <h2>Top Pages</h2>
-            <ul class="no-list">
-              {pageData.map((item) => (
-                <li class="lined row">
-                  <a href={pathUrl(item.path)}>{item.path}</a>
-                  <span class="row-count">{item.total}</span>
-                </li>
-              ))}
-            </ul>
+            <h2>Unique Visitors</h2>
+            <p class="faded section-sub">{rangeLabel}</p>
+            <ChartTotalVisits client:load data={visitorsDateData} />
           </section>
 
           <section class="section">
-            <h2>Top Referrers</h2>
-            {refData.length > 0 ? (
+            <h2>Views</h2>
+            <p class="faded section-sub">{rangeLabel}</p>
+            <ChartTotalVisits client:load data={viewsDateData} />
+          </section>
+
+          <div class="two-col">
+            <section class="section">
+              <h2>Top Pages</h2>
               <ul class="no-list">
-                {refData.map((item) => (
+                {pageData.map((item) => (
                   <li class="lined row">
-                    <span>{item.referrer}</span>
+                    <a href={pathUrl(item.path)}>{item.path}</a>
                     <span class="row-count">{item.total}</span>
                   </li>
                 ))}
               </ul>
-            ) : (
-              <p class="faded">No referrers recorded yet.</p>
-            )}
-          </section>
-        </div>
+            </section>
 
-        <div class="two-col">
+            <section class="section">
+              <h2>Top Referrers</h2>
+              {refData.length > 0 ? (
+                <ul class="no-list">
+                  {refData.map((item) => (
+                    <li class="lined row">
+                      <span>{item.referrer}</span>
+                      <span class="row-count">{item.total}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p class="faded">No referrers recorded yet.</p>
+              )}
+            </section>
+          </div>
+
+          <div class="two-col">
+            <section class="section">
+              <h2>Top Cities</h2>
+              {cityData.length > 0 ? (
+                <ul class="no-list">
+                  {cityData.map((item) => (
+                    <li class="lined row">
+                      <span>
+                        {item.flag} {item.city}
+                      </span>
+                      <span class="row-count">{item.total}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p class="faded">No city data recorded yet.</p>
+              )}
+            </section>
+
+            <section class="section">
+              <h2>Top Bots</h2>
+              {botData.length > 0 ? (
+                <ul class="no-list">
+                  {botData.map((item) => (
+                    <li class="lined row">
+                      <span>{item.botName}</span>
+                      <span class="row-count">{item.total}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p class="faded">No bot visits recorded yet.</p>
+              )}
+            </section>
+          </div>
+
           <section class="section">
-            <h2>Top Cities</h2>
-            {cityData.length > 0 ? (
+            <h2>Recent Activity</h2>
+            {recentRows.length > 0 ? (
               <ul class="no-list">
-                {cityData.map((item) => (
-                  <li class="lined row">
-                    <span>
-                      {item.flag} {item.city}
+                {recentRows.map((r) => (
+                  <li class="lined row recent-row">
+                    <span class="recent-time">{fmtTime(r.date)}</span>
+                    <span class="recent-path">
+                      <a href={pathUrl(r.path)}>{r.path}</a>
                     </span>
-                    <span class="row-count">{item.total}</span>
+                    {r.flag && <span class="recent-flag">{r.flag}</span>}
+                    {r.botName && <span class="badge">{r.botName}</span>}
                   </li>
                 ))}
               </ul>
             ) : (
-              <p class="faded">No city data recorded yet.</p>
+              <p class="faded">No recent activity.</p>
             )}
           </section>
-
-          <section class="section">
-            <h2>Top Bots</h2>
-            {botData.length > 0 ? (
-              <ul class="no-list">
-                {botData.map((item) => (
-                  <li class="lined row">
-                    <span>{item.botName}</span>
-                    <span class="row-count">{item.total}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p class="faded">No bot visits recorded yet.</p>
-            )}
-          </section>
-        </div>
-
-        <section class="section">
-          <h2>Recent Activity</h2>
-          {recentRows.length > 0 ? (
-            <ul class="no-list">
-              {recentRows.map((r) => (
-                <li class="lined row recent-row">
-                  <span class="recent-time">{fmtTime(r.date)}</span>
-                  <span class="recent-path">
-                    <a href={pathUrl(r.path)}>{r.path}</a>
-                  </span>
-                  {r.flag && <span class="recent-flag">{r.flag}</span>}
-                  {r.botName && <span class="badge">{r.botName}</span>}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p class="faded">No recent activity.</p>
-          )}
-        </section>
-      </Fragment>
-    ) : (
-      <p class="faded mt-2">No analytics data available yet.</p>
-    )
-  }
+        </Fragment>
+      ) : (
+        <p class="faded mt-2">No analytics data available yet.</p>
+      )
+    }
+  </div>
 </PostLayout>
