@@ -1,6 +1,7 @@
 import { db, Analytics, Visitors, sql, and } from "astro:db";
 import geoip from "geoip-lite";
 import { createHash } from "node:crypto";
+import { isIP } from "node:net";
 
 const MAX_PATH_LENGTH = 2048;
 const MAX_REFERRER_LENGTH = 2048;
@@ -80,14 +81,78 @@ export function isPageRequest(url: URL): boolean {
   return true;
 }
 
-export function getClientIp(request: Request): string | null {
-  const forwarded = request.headers.get("x-forwarded-for");
-
-  if (forwarded) {
-    return forwarded.split(",")[0].trim();
+function normalizeIp(value: string | null | undefined): string | null {
+  if (!value) {
+    return null;
   }
 
-  return request.headers.get("x-real-ip");
+  let ip = value.trim();
+
+  if (!ip || ip.toLowerCase() === "unknown") {
+    return null;
+  }
+
+  if (ip.startsWith('"') && ip.endsWith('"')) {
+    ip = ip.slice(1, -1);
+  }
+
+  const bracketedIpv6 = ip.match(/^\[([^\]]+)\](?::\d+)?$/);
+
+  if (bracketedIpv6) {
+    ip = bracketedIpv6[1];
+  }
+
+  const ipv4WithPort = ip.match(/^(\d{1,3}(?:\.\d{1,3}){3}):\d+$/);
+
+  if (ipv4WithPort) {
+    ip = ipv4WithPort[1];
+  }
+
+  return isIP(ip) ? ip : null;
+}
+
+function getFirstIp(value: string | null): string | null {
+  if (!value) {
+    return null;
+  }
+
+  for (const part of value.split(",")) {
+    const ip = normalizeIp(part);
+
+    if (ip) {
+      return ip;
+    }
+  }
+
+  return null;
+}
+
+function getForwardedIp(value: string | null): string | null {
+  if (!value) {
+    return null;
+  }
+
+  for (const entry of value.split(",")) {
+    const match = entry.match(/(?:^|;)\s*for=([^;]+)/i);
+    const ip = normalizeIp(match?.[1]);
+
+    if (ip) {
+      return ip;
+    }
+  }
+
+  return null;
+}
+
+export function getClientIp(request: Request): string | null {
+  return (
+    getFirstIp(request.headers.get("cf-connecting-ip")) ||
+    getFirstIp(request.headers.get("true-client-ip")) ||
+    getFirstIp(request.headers.get("x-forwarded-for")) ||
+    getForwardedIp(request.headers.get("forwarded")) ||
+    getFirstIp(request.headers.get("x-real-ip")) ||
+    getFirstIp(request.headers.get("x-client-ip"))
+  );
 }
 
 function countryCodeToFlag(code: string): string | null {

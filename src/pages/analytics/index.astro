@@ -198,11 +198,20 @@ const botData = topN(
   10
 );
 
-const cityData = topN(
+const locationData = topN(
   groupUnique(
     humanRows,
-    (r) => (r.city ? `${r.country}-${r.city}` : null),
-    (r) => ({ city: r.city!, country: r.country!, flag: r.flag })
+    (r) => {
+      if (r.city) {
+        return `city:${r.country ?? ""}:${r.city}`;
+      }
+
+      return r.country ? `country:${r.country}` : null;
+    },
+    (r) => ({
+      label: r.city && r.country ? `${r.city}, ${r.country}` : r.city ?? r.country!,
+      flag: r.flag,
+    })
   ),
   10
 );
@@ -435,20 +444,20 @@ const rangeLabel = days ? `Last ${days} days` : "All time";
 
           <div class="two-col">
             <section class="section">
-              <h2>Top Cities</h2>
-              {cityData.length > 0 ? (
+              <h2>Top Locations</h2>
+              {locationData.length > 0 ? (
                 <ul class="no-list">
-                  {cityData.map((item) => (
+                  {locationData.map((item) => (
                     <li class="lined row">
                       <span>
-                        {item.flag} {item.city}
+                        {item.flag ? `${item.flag} ${item.label}` : item.label}
                       </span>
                       <span class="row-count">{item.total}</span>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p class="faded">No city data recorded yet.</p>
+                <p class="faded">No location data recorded yet.</p>
               )}
             </section>
 
