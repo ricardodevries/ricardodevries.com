@@ -8,6 +8,7 @@ import Code from "./CodeHeader.astro";
 import PostViews from "./PostViews.astro";
 import InlineCode from "./InlineCode.astro";
 import Prompt from "./Prompt.astro";
+import Comments from "./Comments.svelte";
 
 export interface Props {
   post: CollectionEntry<"blog">;
@@ -91,5 +92,8 @@ const updatedstr = updatedDate?.toISOString();
       }}
     />
 
+    <div class="post-comments">
+      <Comments postSlug={post.id} client:visible />
+    </div>
   </article>
 </PostLayout>

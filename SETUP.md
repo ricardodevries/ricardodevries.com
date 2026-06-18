@@ -70,6 +70,13 @@ Environment=PORT="4321"
 Environment=NODE_ENV="production"
 Environment=FINGERPRINT_SECRET="example"
 Environment=ASTRO_DB_REMOTE_URL="http://127.0.0.1:8080"
+Environment=BETTER_AUTH_URL="https://ricardodevries.com"
+Environment=BETTER_AUTH_SECRET="example"
+Environment=GITHUB_CLIENT_ID="example"
+Environment=GITHUB_CLIENT_SECRET="example"
+Environment=MICROSOFT_CLIENT_ID="example"
+Environment=MICROSOFT_CLIENT_SECRET="example"
+Environment=COMMENT_ADMIN_EMAILS="me@example.com"
 
 [Install]
 WantedBy=multi-user.target
