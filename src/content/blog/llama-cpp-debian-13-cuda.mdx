@@ -1,0 +1,151 @@
+---
+title: "llama.cpp on Debian 13 with CUDA"
+description: "Build llama.cpp with CUDA support on Debian 13"
+metaDescription: "Install NVIDIA CUDA packages on Debian 13, build llama.cpp with CUDA, and run a llama-server systemd service."
+heroImage: "../../assets/images/davis-vargas-2vSNlKHn9h0-unsplash.jpg"
+imgCredits: {
+  username: "davacorp",
+  url: "https://unsplash.com/@davacorp"
+}
+pubDate: "2026-06-18"
+status: "published"
+---
+
+These are my Debian 13 notes for building `llama.cpp` with CUDA support. The example uses CUDA architecture `120` for the _RTX PRO 6000 Blackwell Workstation Edition_; change `CMAKE_CUDA_ARCHITECTURES` for your GPU. Use NVIDIA's GPU table to choose the right CUDA architecture: [CUDA GPUs](https://developer.nvidia.com/cuda/gpus).
+
+```shell
+$ nvidia-smi -L | sed 's/ (UUID:.*)//'
+GPU 0: NVIDIA RTX PRO 6000 Blackwell Workstation Edition
+GPU 1: NVIDIA RTX PRO 6000 Blackwell Workstation Edition
+```
+
+## Install CUDA packages
+
+```shell
+sudo apt install linux-headers-$(uname -r)
+
+wget https://developer.download.nvidia.com/compute/cuda/repos/debian13/x86_64/cuda-keyring_1.1-1_all.deb
+sudo dpkg -i cuda-keyring_1.1-1_all.deb
+rm cuda-keyring_1.1-1_all.deb
+
+sudo apt update
+
+sudo apt install \
+  cmake \
+  make \
+  git \
+  pkg-config \
+  build-essential \
+  libssl-dev \
+  --no-install-suggests \
+  --no-install-recommends
+
+sudo apt install \
+  nvidia-driver-cuda \
+  nvidia-kernel-open-dkms \
+  cuda-minimal-build-13-3 \
+  cuda-libraries-dev-13-3 \
+  libnccl2 \
+  libnccl-dev \
+  --no-install-suggests \
+  --no-install-recommends
+```
+
+Reboot after installing the driver and kernel modules. Then check `nvidia-smi`:
+
+```shell
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 610.43.02              KMD Version: 610.43.02     CUDA UMD Version: 13.3     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA RTX PRO 6000 Blac...    On  |   00000000:01:00.0 Off |                  Off |
+| 30%   33C    P8             13W /  600W |   83718MiB /  97887MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   1  NVIDIA RTX PRO 6000 Blac...    On  |   00000000:03:00.0 Off |                  Off |
+| 30%   32C    P8             12W /  600W |   79848MiB /  97887MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A          765122      C   ...ma.cpp/build/bin/llama-server      83706MiB |
+|    1   N/A  N/A          765122      C   ...ma.cpp/build/bin/llama-server      79836MiB |
++-----------------------------------------------------------------------------------------+
+```
+
+## Build llama.cpp
+
+Create a dedicated service account and build from its home directory:
+
+```shell
+sudo useradd --create-home --user-group --shell /bin/bash ai
+sudo -iu ai
+
+git clone https://github.com/ggerganov/llama.cpp
+cd llama.cpp
+git checkout b9670
+
+cmake -B build \
+  -DGGML_AVX=ON \
+  -DGGML_AVX2=ON \
+  -DGGML_AVX_VNNI=ON \
+  -DGGML_AVX512=ON \
+  -DGGML_AVX512_VBMI=ON \
+  -DGGML_AVX512_VNNI=ON \
+  -DGGML_AVX512_BF16=ON \
+  -DGGML_CUDA=ON \
+  -DGGML_NCCL=ON \
+  -DGGML_LTO=ON \
+  -DGGML_OPENMP=ON \
+  -DGGML_NATIVE=ON \
+  -DGGML_CCACHE=OFF \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_CUDA_ARCHITECTURES=120 \
+  -DCMAKE_CUDA_COMPILER=/usr/local/cuda-13.3/bin/nvcc \
+  -DCUDAToolkit_ROOT=/usr/local/cuda-13.3 \
+  -DNCCL_INCLUDE_DIR=/usr/include \
+  -DNCCL_LIBRARY=/usr/lib/x86_64-linux-gnu/libnccl.so
+
+cmake --build build --config Release --parallel
+```
+
+## Run llama-server with systemd
+
+Create the service:
+
+```ini title="/etc/systemd/system/llama-server.service"
+[Unit]
+Description=llama.cpp server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=exec
+User=ai
+Group=ai
+WorkingDirectory=/home/ai/llama.cpp
+Environment=HF_TOKEN=hf_xxx
+Environment=HF_HOME=/mnt/md1
+ExecStart=/home/ai/llama.cpp/build/bin/llama-server --models-preset /home/ai/models.ini --models-max 1 --metrics --host 0.0.0.0 --port 8080
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=300
+TimeoutStopSec=120
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Enable it:
+
+```shell
+sudo systemctl daemon-reload
+sudo systemctl enable --now llama-server
+```
