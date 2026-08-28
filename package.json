@@ -19,7 +19,7 @@
     "@astrojs/node": "^11.1.4",
     "@astrojs/rss": "^4.0.19",
     "@astrojs/svelte": "^9.0.1",
-    "@better-auth/drizzle-adapter": "^1.6.11",
+    "@better-auth/drizzle-adapter": "^1.7.1",
     "@dev.icons/core": "^1.1.0",
     "@lucide/astro": "^1.35.0",
     "@resvg/resvg-js": "^2.6.2",
