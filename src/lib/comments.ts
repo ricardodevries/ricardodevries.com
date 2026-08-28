@@ -44,6 +44,26 @@ const commentSanitizeSchema: SanitizeSchema = {
   tagNames: defaultSchema.tagNames?.filter(
     (tagName) => tagName !== "img" && tagName !== "input",
   ),
+  // Allow style/class attributes on elements used by Shiki for syntax highlighting.
+  // This schema is applied after rehypeShiki so that Shiki's output is covered.
+  attributes: {
+    ...defaultSchema.attributes,
+    span: [
+      ...(defaultSchema.attributes?.span ?? []),
+      "style",
+      "class",
+    ],
+    code: [
+      ...(defaultSchema.attributes?.code ?? []),
+      "style",
+      "class",
+    ],
+    pre: [
+      ...(defaultSchema.attributes?.pre ?? []),
+      "style",
+      "class",
+    ],
+  },
 };
 
 const commentMarkdownProcessor = unified()
@@ -51,7 +71,6 @@ const commentMarkdownProcessor = unified()
   .use(remarkGfm)
   .use(remarkBreaks)
   .use(remarkRehype)
-  .use(rehypeSanitize, commentSanitizeSchema)
   .use(rehypeShiki, {
     defaultLanguage: "markdown",
     fallbackLanguage: "markdown",
@@ -59,6 +78,8 @@ const commentMarkdownProcessor = unified()
     theme: vorillazTheme,
     transformers,
   })
+  // Sanitize after Shiki so the final HTML output is always clean.
+  .use(rehypeSanitize, commentSanitizeSchema)
   .use(rehypeStringify);
 
 export interface CommentRow {
