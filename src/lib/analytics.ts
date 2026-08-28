@@ -33,6 +33,15 @@ export function computeFingerprint(
     .digest("hex");
 }
 
+export function normalizePath(input: string): string {
+  const separator = input.search(/[?#]/);
+  const pathname = separator === -1 ? input : input.slice(0, separator);
+  const suffix = separator === -1 ? "" : input.slice(separator);
+  const trimmed = pathname.replace(/\/+$/, "");
+
+  return (trimmed === "" ? "/" : trimmed) + suffix;
+}
+
 export function sanitizePath(input: string | null | undefined): string | null {
   if (typeof input !== "string") {
     return null;
@@ -48,7 +57,7 @@ export function sanitizePath(input: string | null | undefined): string | null {
     return null;
   }
 
-  return trimmed;
+  return normalizePath(trimmed);
 }
 
 export function sanitizeReferrer(input: string | null | undefined): string {
