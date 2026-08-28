@@ -74,9 +74,11 @@ export const AuthAccount = sqliteTable(
   },
   (table) => [
     index("AuthAccount_userId_idx").on(table.userId),
-    uniqueIndex("AuthAccount_accountId_issuer_idx").on(
-      table.accountId,
+    // better-auth looks accounts up by (issuer, accountId) and declares this
+    // pair as the account's unique key, so mirror that exact column order.
+    uniqueIndex("AuthAccount_issuer_accountId_idx").on(
       table.issuer,
+      table.accountId,
     ),
   ],
 );
@@ -113,16 +115,16 @@ export const Comments = sqliteTable(
     updatedAt: isoDate("updatedAt").notNull(),
   },
   (table) => [
-    index("Comments_createdAt_postSlug_status_idx").on(
-      table.createdAt,
+    // The public comment list filters by postSlug + status and orders by
+    // createdAt (see src/pages/api/comments.ts), so lead with the equality
+    // columns and keep createdAt last to satisfy the ORDER BY.
+    index("Comments_postSlug_status_createdAt_idx").on(
       table.postSlug,
       table.status,
-    ),
-    index("Comments_createdAt_parentId_postSlug_idx").on(
       table.createdAt,
-      table.parentId,
-      table.postSlug,
     ),
+    // The per-user rate limit filters by authorUserId + createdAt range
+    // (see src/actions/index.ts).
     index("Comments_authorUserId_createdAt_idx").on(
       table.authorUserId,
       table.createdAt,

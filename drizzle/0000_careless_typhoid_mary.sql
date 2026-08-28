@@ -27,7 +27,7 @@ CREATE TABLE `AuthAccount` (
 );
 --> statement-breakpoint
 CREATE INDEX `AuthAccount_userId_idx` ON `AuthAccount` (`userId`);--> statement-breakpoint
-CREATE UNIQUE INDEX `AuthAccount_accountId_issuer_idx` ON `AuthAccount` (`accountId`,`issuer`);--> statement-breakpoint
+CREATE UNIQUE INDEX `AuthAccount_issuer_accountId_idx` ON `AuthAccount` (`issuer`,`accountId`);--> statement-breakpoint
 CREATE TABLE `AuthSession` (
 	`id` text PRIMARY KEY NOT NULL,
 	`userId` text NOT NULL,
@@ -77,8 +77,7 @@ CREATE TABLE `Comments` (
 	`updatedAt` text NOT NULL
 );
 --> statement-breakpoint
-CREATE INDEX `Comments_createdAt_postSlug_status_idx` ON `Comments` (`createdAt`,`postSlug`,`status`);--> statement-breakpoint
-CREATE INDEX `Comments_createdAt_parentId_postSlug_idx` ON `Comments` (`createdAt`,`parentId`,`postSlug`);--> statement-breakpoint
+CREATE INDEX `Comments_postSlug_status_createdAt_idx` ON `Comments` (`postSlug`,`status`,`createdAt`);--> statement-breakpoint
 CREATE INDEX `Comments_authorUserId_createdAt_idx` ON `Comments` (`authorUserId`,`createdAt`);--> statement-breakpoint
 CREATE TABLE `Views` (
 	`id` text PRIMARY KEY NOT NULL,

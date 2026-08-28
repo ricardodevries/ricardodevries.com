@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "df2984c3-ae34-4e2a-8264-13647a475b25",
+  "id": "a3ca2b74-ab90-4080-9a3a-560bf390ed4d",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "Analytics": {
@@ -180,11 +180,11 @@
           ],
           "isUnique": false
         },
-        "AuthAccount_accountId_issuer_idx": {
-          "name": "AuthAccount_accountId_issuer_idx",
+        "AuthAccount_issuer_accountId_idx": {
+          "name": "AuthAccount_issuer_accountId_idx",
           "columns": [
-            "accountId",
-            "issuer"
+            "issuer",
+            "accountId"
           ],
           "isUnique": true
         }
@@ -493,21 +493,12 @@
         }
       },
       "indexes": {
-        "Comments_createdAt_postSlug_status_idx": {
-          "name": "Comments_createdAt_postSlug_status_idx",
+        "Comments_postSlug_status_createdAt_idx": {
+          "name": "Comments_postSlug_status_createdAt_idx",
           "columns": [
-            "createdAt",
             "postSlug",
-            "status"
-          ],
-          "isUnique": false
-        },
-        "Comments_createdAt_parentId_postSlug_idx": {
-          "name": "Comments_createdAt_parentId_postSlug_idx",
-          "columns": [
-            "createdAt",
-            "parentId",
-            "postSlug"
+            "status",
+            "createdAt"
           ],
           "isUnique": false
         },
