@@ -69,7 +69,7 @@ Environment=HOST="127.0.0.1"
 Environment=PORT="4321"
 Environment=NODE_ENV="production"
 Environment=FINGERPRINT_SECRET="example"
-Environment=ASTRO_DB_REMOTE_URL="http://127.0.0.1:8080"
+Environment=DATABASE_URL="http://127.0.0.1:8080"
 Environment=BETTER_AUTH_URL="https://ricardodevries.com"
 Environment=BETTER_AUTH_SECRET="example"
 Environment=GITHUB_CLIENT_ID="example"
@@ -100,10 +100,12 @@ RestartSec=5
 WantedBy=multi-user.target
 ```
 
-Push the Astro DB schema after `libsql.service` is running:
+Apply the database migrations after `libsql.service` is running. Deployments
+run this automatically, but you can also run it manually from the release
+directory (`/var/www/current`):
 
 ```
-ASTRO_DB_REMOTE_URL=http://127.0.0.1:8080 npx astro db push --remote
+DATABASE_URL=http://127.0.0.1:8080 npm run db:migrate
 ```
 
 Create the nginx configuration at `/etc/nginx/conf.d/ricardodevries.com.conf`:

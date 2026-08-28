@@ -1,6 +1,6 @@
 import { ActionError, defineAction } from "astro:actions";
 import { getCollection } from "astro:content";
-import { and, Comments, db, eq, gte } from "astro:db";
+import { and, Comments, db, eq, gte } from "@/lib/db";
 import { z } from "astro/zod";
 import {
   COMMENT_BODY_MAX_LENGTH,
