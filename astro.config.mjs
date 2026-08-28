@@ -9,6 +9,7 @@ import db from "@astrojs/db";
 // https://astro.build/config
 export default defineConfig({
   site: "https://ricardodevries.com",
+  trailingSlash: "never",
   security: {
     allowedDomains: [
       {
