@@ -26,7 +26,7 @@
     "@shikijs/rehype": "^4.1.0",
     "@shikijs/transformers": "^4.1.0",
     "astro": "^7.2.6",
-    "better-auth": "^1.6.11",
+    "better-auth": "^1.6.22",
     "drizzle-orm": "^0.45.2",
     "geoip-lite": "^2.0.2",
     "isbot": "^5.1.40",
@@ -58,7 +58,7 @@
     "react": "^19.2.8",
     "rehype-external-links": "^3.0.0",
     "sass": "^1.100.0",
-    "svelte": "^5.55.3",
+    "svelte": "^5.56.10",
     "typescript-eslint": "^8.60.0",
     "unist-util-visit": "^5.1.0"
   }
