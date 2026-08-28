@@ -1,7 +1,8 @@
 ---
 import PostLayout from "../../layouts/PostLayout.astro";
 import ChartTotalVisits from "../../components/ChartTotalVisits.svelte";
-import { db, Analytics, sql, gte, and, eq, desc } from "astro:db";
+import { normalizePath } from "../../lib/analytics";
+import { db, Analytics, sql, gte, and, eq, or, desc } from "astro:db";
 
 const RANGES: Record<string, number | null> = {
   "7d": 7,
@@ -13,7 +14,8 @@ const RANGES: Record<string, number | null> = {
 const rangeParam = Astro.url.searchParams.get("range") || "30d";
 const range = rangeParam in RANGES ? rangeParam : "30d";
 const days = RANGES[range] ?? null;
-const pathFilter = Astro.url.searchParams.get("path") || null;
+const rawPathFilter = Astro.url.searchParams.get("path");
+const pathFilter = rawPathFilter ? normalizePath(rawPathFilter) : null;
 
 const now = new Date();
 const rangeStart = days ? new Date(now.getTime() - days * 86400000) : null;
@@ -36,6 +38,12 @@ let rows: Row[] = [];
 let prevRows: Row[] = [];
 type DbCondition = Parameters<typeof and>[number];
 
+// Match both the normalized path and any legacy trailing-slash variant so
+// historical rows are merged with the canonical path.
+const pathCondition: DbCondition | null = pathFilter
+  ? or(eq(Analytics.path, pathFilter), eq(Analytics.path, `${pathFilter}/`))
+  : null;
+
 try {
   const conditions: DbCondition[] = [];
 
@@ -43,8 +51,8 @@ try {
     conditions.push(gte(Analytics.date, rangeStart));
   }
 
-  if (pathFilter) {
-    conditions.push(eq(Analytics.path, pathFilter));
+  if (pathCondition) {
+    conditions.push(pathCondition);
   }
 
   rows = await db
@@ -53,13 +61,13 @@ try {
     .where(conditions.length > 0 ? and(...conditions) : undefined);
 
   if (prevStart && rangeStart) {
-    const prevConditions = [
+    const prevConditions: DbCondition[] = [
       gte(Analytics.date, prevStart),
       sql`${Analytics.date} < ${rangeStart}`,
     ];
 
-    if (pathFilter) {
-      prevConditions.push(eq(Analytics.path, pathFilter));
+    if (pathCondition) {
+      prevConditions.push(pathCondition);
     }
 
     prevRows = await db
@@ -180,7 +188,11 @@ const normalizeRef = (r: string | null): string => {
 };
 
 const pageData = topN(
-  groupUnique(humanRows, (r) => r.path, (r) => ({ path: r.path })),
+  groupUnique(
+    humanRows,
+    (r) => normalizePath(r.path),
+    (r) => ({ path: normalizePath(r.path) })
+  ),
   10
 );
 
@@ -265,8 +277,8 @@ let recentRows: Row[] = [];
 try {
   const conditions: DbCondition[] = [];
 
-  if (pathFilter) {
-    conditions.push(eq(Analytics.path, pathFilter));
+  if (pathCondition) {
+    conditions.push(pathCondition);
   }
 
   recentRows = await db
@@ -486,7 +498,7 @@ const rangeLabel = days ? `Last ${days} days` : "All time";
                   <li class="lined row recent-row">
                     <span class="recent-time">{fmtTime(r.date)}</span>
                     <span class="recent-path">
-                      <a href={pathUrl(r.path)}>{r.path}</a>
+                      <a href={pathUrl(normalizePath(r.path))}>{normalizePath(r.path)}</a>
                     </span>
                     {r.flag && <span class="recent-flag">{r.flag}</span>}
                     {r.botName && <span class="badge">{r.botName}</span>}
