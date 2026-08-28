@@ -71,7 +71,7 @@ jobs:
       - name: "Run database migrations"
         working-directory: /var/www/releases/${{ github.sha }}
         env:
-          DATABASE_URL: ${{ vars.ASTRO_DB_REMOTE_URL }}
+          DATABASE_URL: ${{ vars.DATABASE_URL || vars.ASTRO_DB_REMOTE_URL }}
         run: node scripts/migrate.mjs
 
       - name: "Activate release"

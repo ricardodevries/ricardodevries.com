@@ -13,8 +13,8 @@ import {
  * `column.date()`, so existing rows remain byte-compatible after the migration
  * from astro:db to a direct Drizzle + libSQL setup.
  */
-const isISODateString = (value: string): boolean =>
-  /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/.test(value);
+const hasTimezoneSuffix = (value: string): boolean =>
+  /(Z|[+-]\d{2}:\d{2})$/i.test(value);
 
 const isoDate = customType<{ data: Date; driverData: string }>({
   dataType() {
@@ -24,7 +24,7 @@ const isoDate = customType<{ data: Date; driverData: string }>({
     return value.toISOString();
   },
   fromDriver(value) {
-    return new Date(isISODateString(value) ? value : `${value}Z`);
+    return new Date(hasTimezoneSuffix(value) ? value : `${value}Z`);
   },
 });
 
