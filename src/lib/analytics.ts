@@ -6,8 +6,7 @@ import { isIP } from "node:net";
 const MAX_PATH_LENGTH = 2048;
 const MAX_REFERRER_LENGTH = 2048;
 
-const FINGERPRINT_SECRET =
-  process.env.FINGERPRINT_SECRET || "ricardodevries-default-salt";
+const FINGERPRINT_SECRET = process.env.FINGERPRINT_SECRET;
 
 export function getDateKey(date: Date = new Date()): string {
   const y = date.getUTCFullYear();
@@ -23,6 +22,10 @@ export function computeFingerprint(
   date: Date = new Date(),
 ): string | null {
   if (!ip && !userAgent) {
+    return null;
+  }
+
+  if (!FINGERPRINT_SECRET) {
     return null;
   }
 
