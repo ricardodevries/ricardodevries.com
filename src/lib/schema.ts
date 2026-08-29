@@ -74,11 +74,13 @@ export const AuthAccount = sqliteTable(
   },
   (table) => [
     index("AuthAccount_userId_idx").on(table.userId),
-    // better-auth looks accounts up by (issuer, accountId) and declares this
-    // pair as the account's unique key, so mirror that exact column order.
-    uniqueIndex("AuthAccount_issuer_accountId_idx").on(
-      table.issuer,
+    // better-auth 1.7 looks accounts up by issuer + accountId with equality on
+    // both columns and treats the pair as the account's unique key. The column
+    // order is interchangeable for that lookup, so keep (accountId, issuer) to
+    // match the existing production index and avoid rebuilding a unique index.
+    uniqueIndex("AuthAccount_accountId_issuer_idx").on(
       table.accountId,
+      table.issuer,
     ),
   ],
 );
