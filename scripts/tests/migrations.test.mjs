@@ -252,6 +252,41 @@ test("--baseline is idempotent", async () => {
   }
 });
 
+test("--baseline verifies the recorded baseline hash and refuses on mismatch", async () => {
+  const { url, dir } = makeDb("baseline-mismatch");
+  try {
+    // An existing application database (with history) whose recorded baseline
+    // hash diverges from the 0000 file on disk. This is the corrupted-history
+    // case from the review: --baseline must refuse rather than proceed.
+    const c = await seed(url, [
+      ...OTHER_TABLES,
+      POST_DDL_ACCOUNT,
+      ...ACCOUNT_INDEXES_POST_DDL,
+      ...OTHER_INDEXES,
+      ...OLD_COMMENTS_INDEXES,
+      `CREATE TABLE "__drizzle_migrations" (id SERIAL PRIMARY KEY, hash text NOT NULL, created_at numeric)`,
+      `INSERT INTO "__drizzle_migrations" (hash, created_at) VALUES ('deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef', ${BASELINE_WHEN})`,
+    ]);
+    c.close();
+
+    // --baseline: must detect the hash mismatch and refuse, without
+    // touching the recorded row or applying any migration.
+    const mismatch = runMigrate(url, ["--baseline"]);
+    assert.notEqual(mismatch.status, 0);
+    assert.match(mismatch.stderr + mismatch.stdout, /inconsistent with the files/);
+
+    const check = createClient({ url });
+    const mig = (await check.execute("SELECT hash, created_at FROM __drizzle_migrations")).rows;
+    const comments = (await check.execute("SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='Comments'")).rows;
+    check.close();
+    assert.equal(mig.length, 1, "no migration rows may be added");
+    assert.equal(mig[0].hash, "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef", "recorded row must be untouched");
+    assert.ok(comments.some((i) => i.name === "Comments_createdAt_postSlug_status_idx"), "0001 must not have run");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test("fresh and production-shaped databases converge on the same schema", async () => {
   const fresh = makeDb("converge-fresh");
   const prod = makeDb("converge-prod");

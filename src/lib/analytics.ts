@@ -60,18 +60,27 @@ export function sanitizePath(input: string | null | undefined): string | null {
   // prefixes 404 bot/feed-tracked paths with it, see src/middleware.ts).
   // Accept exactly that shape — `404:` followed by a URL path starting with
   // `/` — and validate the path against the usual charset. Any other colon
-  // (e.g. `javascript:…`) is still rejected.
-  let pathOnly = trimmed;
+  // (e.g. `javascript:…`) is still rejected. Normalize only the path part and
+  // reattach the prefix so the stored label always keeps its `404:/…` shape
+  // (normalizePath on the whole label would strip the `/` from a root `404:/`).
+  if (trimmed.startsWith("404:")) {
+    const path = trimmed.slice(4);
 
-  if (pathOnly.startsWith("404:")) {
-    if (!pathOnly.slice(4).startsWith("/")) {
+    if (
+      !path.startsWith("/") ||
+      // Reject `//` after the label: a stored `404://…` value rendered into
+      // an href (e.g. via pathUrl) is protocol-relative, which must not be
+      // reachable from an attacker-controlled path.
+      path.startsWith("//") ||
+      !/^[\w\-./~%?&=#]+$/.test(path)
+    ) {
       return null;
     }
 
-    pathOnly = pathOnly.slice(4);
+    return `404:${normalizePath(path)}`;
   }
 
-  if (!/^[\w\-./~%?&=#]+$/.test(pathOnly)) {
+  if (!/^[\w\-./~%?&=#]+$/.test(trimmed)) {
     return null;
   }
 

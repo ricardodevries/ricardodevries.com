@@ -77,6 +77,51 @@ function sha256Of(tag) {
   return createHash("sha256").update(sql).digest("hex");
 }
 
+async function verifyBaselineRow() {
+  // Verify the recorded baseline (hash of the 0000 file + its `when`), or
+  // record it. Throws on any inconsistency so a corrupted or divergent
+  // migration history can never proceed silently.
+  const journalEntry = journalEntries().find((e) => e.tag === BASELINE_TAG);
+
+  if (!journalEntry || journalEntry.when !== BASELINE_WHEN) {
+    throw new Error(
+      `Baseline journal entry ${BASELINE_TAG} is missing or has an unexpected "when"; refusing to continue.`,
+    );
+  }
+
+  // Same shape the Drizzle migrator uses (migrator.js), so a later plain
+  // `db:migrate` run sees a consistent tracking table.
+  await client.execute({
+    sql: "CREATE TABLE IF NOT EXISTS __drizzle_migrations (id SERIAL PRIMARY KEY, hash text NOT NULL, created_at numeric)",
+  });
+
+  const hash = sha256Of(BASELINE_TAG);
+  const { rows } = await client.execute({
+    sql: "SELECT hash FROM __drizzle_migrations WHERE created_at = ?",
+    args: [BASELINE_WHEN],
+  });
+
+  if (rows.length === 0) {
+    await client.execute({
+      sql: "INSERT INTO __drizzle_migrations (hash, created_at) VALUES (?, ?)",
+      args: [hash, BASELINE_WHEN],
+    });
+    console.log(`Recorded baseline ${BASELINE_TAG} (sha256 ${hash}) without executing it.`);
+  } else if (rows[0].hash !== hash) {
+    throw new Error(
+      [
+        `Recorded baseline for ${BASELINE_TAG} has hash ${rows[0].hash}, but the`,
+        `migration file on disk hashes to ${hash}. The migration history is`,
+        "inconsistent with the files; refusing to continue.",
+        "If this database was baselined against a different 0000, restore the",
+        "matching file (or its recorded hash) and re-run.",
+      ].join("\n"),
+    );
+  } else {
+    console.log(`Baseline ${BASELINE_TAG} already recorded (hash verified); nothing to do.`);
+  }
+}
+
 try {
   const hasAppTables =
     (await tableExists("Analytics")) &&
@@ -85,8 +130,21 @@ try {
     (await tableExists("Views"));
   const hasHistory = await tableExists("__drizzle_migrations");
 
-  if (hasAppTables && !hasHistory) {
-    if (!process.argv.includes("--baseline")) {
+  if (hasAppTables) {
+    const wantBaseline = process.argv.includes("--baseline");
+
+    if (wantBaseline) {
+      // --baseline on an existing application database: verify (or record)
+      // the baseline row, and add the issuer column if this database
+      // predates better-auth 1.7. Safe to run any number of times.
+      if ((await tableExists("AuthAccount")) && !(await columnExists("AuthAccount", "issuer"))) {
+        console.log("Adding missing `AuthAccount.issuer` column.");
+        await client.execute({ sql: 'ALTER TABLE "AuthAccount" ADD COLUMN "issuer" text' });
+      }
+
+      await verifyBaselineRow();
+    } else if (!hasHistory) {
+      // Adoption without history must be an explicit operator decision.
       throw new Error(
         [
           "Database already contains the application tables but has no",
@@ -99,52 +157,14 @@ try {
         ].join("\n"),
       );
     }
-
-    console.log(
-      "Existing database without Drizzle history detected; bootstrapping migration tracking (--baseline).",
-    );
-
-    // Databases created before better-auth 1.7 have no AuthAccount.issuer
-    // column; later migrations and the auth library expect it.
-    if ((await tableExists("AuthAccount")) && !(await columnExists("AuthAccount", "issuer"))) {
-      console.log("Adding missing `AuthAccount.issuer` column.");
-      await client.execute({ sql: 'ALTER TABLE "AuthAccount" ADD COLUMN "issuer" text' });
-    }
-
-    const baseline = journalEntries().find((e) => e.tag === BASELINE_TAG);
-
-    if (!baseline || baseline.when !== BASELINE_WHEN) {
-      throw new Error(
-        `Baseline journal entry ${BASELINE_TAG} is missing or has an unexpected "when"; refusing to bootstrap.`,
-      );
-    }
-
-    // Same shape the Drizzle migrator uses (migrator.js), so a later plain
-    // `db:migrate` run sees a consistent tracking table.
-    await client.execute({
-      sql: "CREATE TABLE IF NOT EXISTS __drizzle_migrations (id SERIAL PRIMARY KEY, hash text NOT NULL, created_at numeric)",
-    });
-
-    const hash = sha256Of(BASELINE_TAG);
-    const { rows } = await client.execute({
-      sql: "SELECT hash FROM __drizzle_migrations WHERE created_at = ?",
-      args: [BASELINE_WHEN],
-    });
-
-    if (rows.length === 0) {
-      await client.execute({
-        sql: "INSERT INTO __drizzle_migrations (hash, created_at) VALUES (?, ?)",
-        args: [hash, BASELINE_WHEN],
-      });
-      console.log(`Recorded baseline ${BASELINE_TAG} (sha256 ${hash}) without executing it.`);
-    } else {
-      console.log(`Baseline ${BASELINE_TAG} already recorded; nothing to do.`);
-    }
   }
 
   console.log(`Applying database migrations to ${url} ...`);
   await migrate(db, { migrationsFolder });
   console.log("Database migrations applied.");
+} catch (error) {
+  console.error(error instanceof Error ? error.message : String(error));
+  process.exitCode = 1;
 } finally {
   client.close();
 }
