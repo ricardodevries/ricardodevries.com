@@ -1,6 +1,7 @@
 import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 import { migrate } from "drizzle-orm/libsql/migrator";
+import { existsSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -27,7 +28,10 @@ import { fileURLToPath } from "node:url";
  *   (reads DATABASE_URL / ASTRO_DB_REMOTE_URL for the source; defaults to the
  *    SSH-tunneled http://127.0.0.1:18080)
  *
- * It never writes to the source database.
+ * It never writes to the source database. The target file must not exist:
+ * the script refuses to run against an existing output file (a second run
+ * would duplicate rows or hit primary-key conflicts), unless `--force` is
+ * passed, which deletes the existing file first.
  */
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const migrationsFolder = join(root, "drizzle");
@@ -36,9 +40,27 @@ const sourceUrl =
   process.env.DATABASE_URL ||
   process.env.ASTRO_DB_REMOTE_URL ||
   "http://127.0.0.1:18080";
-const outFile = process.argv[2] || "local.db";
+const force = process.argv.includes("--force");
+const outFile = process.argv.slice(2).find((a) => !a.startsWith("-")) ?? "local.db";
 const sourceAuth =
   process.env.DATABASE_AUTH_TOKEN || process.env.ASTRO_DB_APP_TOKEN || undefined;
+
+// Refuse to write into an existing file: a second run would duplicate rows
+// or fail on primary-key conflicts. --force deletes it first (and its
+// libSQL sidecar files).
+for (const f of [outFile, `${outFile}-wal`, `${outFile}-shm`]) {
+  if (existsSync(f)) {
+    if (!force) {
+      console.error(
+        `${f} already exists. Remove it or pass --force to overwrite.`,
+      );
+      process.exit(1);
+    }
+
+    rmSync(f, { force: true });
+    console.log(`Removed existing ${f} (--force).`);
+  }
+}
 
 const source = createClient({ url: sourceUrl, authToken: sourceAuth });
 const targetUrl = `file:${outFile}`;
