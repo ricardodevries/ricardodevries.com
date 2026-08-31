@@ -7,6 +7,14 @@ dist/
 # dependencies
 node_modules/
 
+# local database
+local.db
+local.db-*
+prod-copy.db
+prod-copy.db-*
+dbtest-*.db
+dbtest-*.db-*
+
 # logs
 npm-debug.log*
 yarn-debug.log*

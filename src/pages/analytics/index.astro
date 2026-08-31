@@ -2,7 +2,7 @@
 import PostLayout from "../../layouts/PostLayout.astro";
 import ChartTotalVisits from "../../components/ChartTotalVisits.svelte";
 import { normalizePath } from "../../lib/analytics";
-import { db, Analytics, sql, gte, and, eq, or, desc } from "astro:db";
+import { db, Analytics, sql, gte, and, eq, or, desc, lt } from "@/lib/db";
 
 const RANGES: Record<string, number | null> = {
   "7d": 7,
@@ -63,7 +63,7 @@ try {
   if (prevStart && rangeStart) {
     const prevConditions: DbCondition[] = [
       gte(Analytics.date, prevStart),
-      sql`${Analytics.date} < ${rangeStart}`,
+      lt(Analytics.date, rangeStart),
     ];
 
     if (pathCondition) {

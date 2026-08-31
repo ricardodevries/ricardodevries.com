@@ -1,4 +1,4 @@
-import { db, Analytics, Visitors, sql, and } from "astro:db";
+import { db, Analytics, Visitors, sql, and, lt } from "@/lib/db";
 import geoip from "geoip-lite";
 import { createHash } from "node:crypto";
 import { isIP } from "node:net";
@@ -54,6 +54,30 @@ export function sanitizePath(input: string | null | undefined): string | null {
 
   if (trimmed.length === 0 || trimmed.length > MAX_PATH_LENGTH) {
     return null;
+  }
+
+  // The analytics store allows an internal `404:<path>` label (the middleware
+  // prefixes 404 bot/feed-tracked paths with it, see src/middleware.ts).
+  // Accept exactly that shape — `404:` followed by a URL path starting with
+  // `/` — and validate the path against the usual charset. Any other colon
+  // (e.g. `javascript:…`) is still rejected. Normalize only the path part and
+  // reattach the prefix so the stored label always keeps its `404:/…` shape
+  // (normalizePath on the whole label would strip the `/` from a root `404:/`).
+  if (trimmed.startsWith("404:")) {
+    const path = trimmed.slice(4);
+
+    if (
+      !path.startsWith("/") ||
+      // Reject `//` after the label: a stored `404://…` value rendered into
+      // an href (e.g. via pathUrl) is protocol-relative, which must not be
+      // reachable from an attacker-controlled path.
+      path.startsWith("//") ||
+      !/^[\w\-./~%?&=#]+$/.test(path)
+    ) {
+      return null;
+    }
+
+    return `404:${normalizePath(path)}`;
   }
 
   if (!/^[\w\-./~%?&=#]+$/.test(trimmed)) {
@@ -266,7 +290,7 @@ export async function anonymizeOldFingerprints(): Promise<void> {
       .set({ fingerprint: null })
       .where(
         and(
-          sql`${Analytics.date} < ${cutoff}`,
+          lt(Analytics.date, cutoff),
           sql`${Analytics.fingerprint} is not null`,
         ),
       );

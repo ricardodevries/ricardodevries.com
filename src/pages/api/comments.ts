@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { getCollection } from "astro:content";
-import { and, asc, Comments, db, eq, or } from "astro:db";
+import { and, asc, Comments, db, eq, or } from "@/lib/db";
 import { getConfiguredAuthProviders } from "@/lib/auth-providers";
 import { isCommentAdmin, toPublicComment, type CommentRow } from "@/lib/comments";
 

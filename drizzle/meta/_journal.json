@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1787923245906,
+      "tag": "0000_careless_typhoid_mary",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1788005374055,
+      "tag": "0001_improve_comments_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1788175325200,
+      "tag": "0002_backfill_auth_account_issuer",
+      "breakpoints": true
+    }
+  ]
+}
