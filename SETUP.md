@@ -108,6 +108,71 @@ directory (`/var/www/current`):
 DATABASE_URL=http://127.0.0.1:8080 npm run db:migrate
 ```
 
+### Existing databases
+
+The migrations are safe to re-run (0001/0002 are idempotent), but the runner
+still needs a sensible starting point when adopting a database that already
+has the application tables:
+
+- **Database has `__drizzle_migrations`** (e.g. this production database,
+  baselined with the row for migration `0000`): plain `db:migrate` is correct.
+  It skips `0000` (its `created_at` matches the baseline) and applies
+  whatever is newer.
+- **Database has the application tables but no `__drizzle_migrations`**
+  (created by `@astrojs/db` before the Drizzle migration, or its tracking
+  table was lost): plain `db:migrate` refuses to run rather than re-executing
+  `0000` against existing tables. Bootstrap the tracking history once with:
+
+  ```
+  DATABASE_URL=http://127.0.0.1:8080 npm run db:migrate -- --baseline
+  ```
+
+  `--baseline` records `0000` without executing it (hash-verified against
+  `drizzle/0000_careless_typhoid_mary.sql`), adds the `AuthAccount.issuer`
+  column when the database predates better-auth 1.7, and then applies every
+  later migration (`0001` index fix, `0002` issuer backfill). It is
+  idempotent, and after it has run a plain `db:migrate` behaves as normal.
+
+  This is a one-time operator step: the deployment workflow runs plain
+  `db:migrate` and never invents history on its own.
+
+### Testing against a copy of production
+
+Never run development builds directly against the production database. Make a
+local copy first. The recommended workflow is **fresh local database + data
+import**, which `scripts/dev-db-from-production.mjs` does end to end:
+
+```
+# From this machine, with an SSH tunnel to the server's libSQL HTTP endpoint:
+ssh -N -L 18080:127.0.0.1:8080 ricardo@<server>
+
+# Build prod-copy.db: fresh schema from the current migrations + all
+# production rows (never touches the source database).
+node scripts/dev-db-from-production.mjs prod-copy.db
+```
+
+Why fresh-DB+import over copying the raw server data files:
+
+- Production libSQL is served by `sqld`, not a plain file. Its on-disk state
+  is a WAL-mode database plus a `sqld`-internal metastore and compaction
+  state. Copying `data`/`data-wal`/`data-shm` while the server runs yields a
+  torn snapshot, and copying the whole directory drags server-internal state
+  into a local development file.
+- A row-based export through the SQL API reads a consistent view of the data
+  and replays it onto a database created from the *current* migrations. The
+  result has the exact current schema and migration history (so
+  `db:migrate` is a clean no-op) and the real production rows — without
+  production-specific artifacts such as the leftover `_astro_db_snapshot`
+  bookkeeping table.
+- The script verifies row counts against the source after the import and
+  reports any mismatch.
+
+`prod-copy.db` is git-ignored. Work against it with
+`DATABASE_URL=file:prod-copy.db` and, if you want to exercise the deployment
+path, run `DATABASE_URL=file:prod-copy.db npm run db:migrate` against it
+first (it is a no-op: the fresh build already contains the full migration
+history, and 0002 backfills the issuer on the imported legacy account row).
+
 Create the nginx configuration at `/etc/nginx/conf.d/ricardodevries.com.conf`:
 
 ```

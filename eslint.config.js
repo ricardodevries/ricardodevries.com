@@ -21,7 +21,7 @@ export default defineConfig(
   ...astro.configs["flat/recommended"],
   ...svelte.configs["flat/recommended"],
   {
-    files: ["**/*.{js,ts,astro,svelte}"],
+    files: ["**/*.{js,ts,astro,svelte}", "**/*.mjs"],
     languageOptions: {
       globals: {
         ...globals.browser,
@@ -30,7 +30,7 @@ export default defineConfig(
     },
   },
   {
-    files: ["**/*.{ts,astro,svelte}"],
+    files: ["**/*.{ts,astro,svelte}", "**/*.mjs"],
     rules: {
       "no-undef": "off",
     },

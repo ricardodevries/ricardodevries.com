@@ -15,6 +15,13 @@
       "when": 1788005374055,
       "tag": "0001_improve_comments_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1788175325200,
+      "tag": "0002_backfill_auth_account_issuer",
+      "breakpoints": true
     }
   ]
 }

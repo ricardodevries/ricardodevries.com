@@ -9,6 +9,7 @@
     "build": "astro check && astro build",
     "preview": "astro preview",
     "lint": "eslint .",
+    "test": "node --test \"scripts/tests/*.test.mjs\"",
     "astro": "astro",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node scripts/migrate.mjs"

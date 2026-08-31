@@ -56,7 +56,22 @@ export function sanitizePath(input: string | null | undefined): string | null {
     return null;
   }
 
-  if (!/^[\w\-./~%?&=#]+$/.test(trimmed)) {
+  // The analytics store allows an internal `404:<path>` label (the middleware
+  // prefixes 404 bot/feed-tracked paths with it, see src/middleware.ts).
+  // Accept exactly that shape — `404:` followed by a URL path starting with
+  // `/` — and validate the path against the usual charset. Any other colon
+  // (e.g. `javascript:…`) is still rejected.
+  let pathOnly = trimmed;
+
+  if (pathOnly.startsWith("404:")) {
+    if (!pathOnly.slice(4).startsWith("/")) {
+      return null;
+    }
+
+    pathOnly = pathOnly.slice(4);
+  }
+
+  if (!/^[\w\-./~%?&=#]+$/.test(pathOnly)) {
     return null;
   }
 
