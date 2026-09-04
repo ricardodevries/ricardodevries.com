@@ -61,7 +61,7 @@
     "hastscript": "^9.0.1",
     "react": "^19.2.8",
     "rehype-external-links": "^3.0.0",
-    "sass": "^1.100.0",
+    "sass": "^1.103.1",
     "svelte": "^5.56.10",
     "typescript-eslint": "^8.60.0",
     "unist-util-visit": "^5.1.0"
