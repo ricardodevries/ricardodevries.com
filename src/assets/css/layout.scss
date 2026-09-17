@@ -561,11 +561,12 @@ select {
 
   .two-col {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: calc(var(--gap) * 2);
     margin-top: calc(var(--gap) * 2.5);
 
     .section {
+      min-width: 0;
       margin-top: 0;
     }
   }

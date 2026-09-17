@@ -2,7 +2,7 @@
 import PostLayout from "../../layouts/PostLayout.astro";
 import ChartTotalVisits from "../../components/ChartTotalVisits.svelte";
 import { normalizePath } from "../../lib/analytics";
-import { db, Analytics, sql, gte, and, eq, or, desc } from "astro:db";
+import { db, Analytics, sql, gte, and, eq, or, desc, lt } from "@/lib/db";
 
 const RANGES: Record<string, number | null> = {
   "7d": 7,
@@ -38,6 +38,8 @@ let rows: Row[] = [];
 let prevRows: Row[] = [];
 type DbCondition = Parameters<typeof and>[number];
 
+const exclude404s: DbCondition = sql`${Analytics.path} not like '404:%'`;
+
 // Match both the normalized path and any legacy trailing-slash variant so
 // historical rows are merged with the canonical path.
 const pathCondition: DbCondition | null = pathFilter
@@ -45,7 +47,7 @@ const pathCondition: DbCondition | null = pathFilter
   : null;
 
 try {
-  const conditions: DbCondition[] = [];
+  const conditions: DbCondition[] = [exclude404s];
 
   if (rangeStart) {
     conditions.push(gte(Analytics.date, rangeStart));
@@ -62,8 +64,9 @@ try {
 
   if (prevStart && rangeStart) {
     const prevConditions: DbCondition[] = [
+      exclude404s,
       gte(Analytics.date, prevStart),
-      sql`${Analytics.date} < ${rangeStart}`,
+      lt(Analytics.date, rangeStart),
     ];
 
     if (pathCondition) {
@@ -257,7 +260,7 @@ try {
   const allTimeResult = await db
     .select({ total: sql<number>`count(*)` })
     .from(Analytics)
-    .where(sql`${Analytics.botName} is null`);
+    .where(and(sql`${Analytics.botName} is null`, exclude404s));
   allTimeHuman = allTimeResult[0]?.total ?? 0;
 
   yearlyData = await db
@@ -266,7 +269,7 @@ try {
       total: sql<number>`count(*)`,
     })
     .from(Analytics)
-    .where(sql`${Analytics.botName} is null`)
+    .where(and(sql`${Analytics.botName} is null`, exclude404s))
     .groupBy(sql`strftime('%Y', ${Analytics.date})`)
     .orderBy(sql`strftime('%Y', ${Analytics.date}) desc`);
 } catch (error) {
@@ -275,7 +278,7 @@ try {
 
 let recentRows: Row[] = [];
 try {
-  const conditions: DbCondition[] = [];
+  const conditions: DbCondition[] = [exclude404s];
 
   if (pathCondition) {
     conditions.push(pathCondition);

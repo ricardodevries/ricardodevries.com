@@ -15,9 +15,14 @@ const trace = [
 <Layout
   title="404: Route not found"
   description="This page could not be found."
+  is404
 >
   <Header />
-  <main class="wrap not-found" aria-labelledby="not-found-title">
+  <main
+    class="wrap not-found"
+    aria-labelledby="not-found-title"
+    data-analytics-ignore
+  >
     <section class="not-found__intro">
       <div class="not-found__status mono">HTTP 404</div>
       <h1 id="not-found-title" class="not-found__title">

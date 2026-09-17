@@ -2,7 +2,10 @@
 document.addEventListener("astro:page-load", () => {
   const path = window.location.pathname;
 
-  if (path.startsWith("/analytics")) {
+  if (
+    path.startsWith("/analytics") ||
+    document.querySelector("[data-analytics-ignore]")
+  ) {
     return;
   }
 
