@@ -88,6 +88,17 @@
     max-width: var(--width);
   }
 
+  > pre.mermaid {
+    display: flex;
+    justify-content: center;
+
+    > svg {
+      display: block;
+      max-width: 100%;
+      margin-inline: auto;
+    }
+  }
+
   figure {
     display: flex;
     gap: calc(var(--gap) / 2);

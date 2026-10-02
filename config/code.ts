@@ -76,7 +76,7 @@ export const singleLineCodeBlock: Plugin<[], HastRoot> = () => (tree) => {
 
 export const codeBlock: Plugin<[], MdastRoot> = (): Transformer<MdastRoot> => (tree) => {
   visit(tree, "code", (node: Code, index: number | undefined, parent: Parent | undefined) => {
-    if (typeof index !== "number" || !parent) {
+    if (typeof index !== "number" || !parent || node.lang === "mermaid") {
       return;
     }
 
