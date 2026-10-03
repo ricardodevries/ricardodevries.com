@@ -4,7 +4,6 @@ import sitemap from "@astrojs/sitemap";
 import svelte, { vitePreprocess } from "@astrojs/svelte";
 import node from "@astrojs/node";
 import { rehypePlugins, remarkPlugins } from "./config/plugins";
-import db from "@astrojs/db";
 import mermaid from "astro-mermaid";
 
 // https://astro.build/config
@@ -30,7 +29,6 @@ export default defineConfig({
     mdx(),
     svelte({ preprocess: vitePreprocess() }),
     sitemap(),
-    db(),
     mermaid(),
   ],
   vite: {

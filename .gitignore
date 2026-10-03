@@ -4,6 +4,9 @@ dist/
 # generated types
 .astro/
 
+# local development database
+local.db*
+
 # dependencies
 node_modules/
 

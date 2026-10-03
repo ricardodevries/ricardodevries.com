@@ -1,4 +1,4 @@
-import { db, Analytics, Visitors, sql, and } from "astro:db";
+import { db, Analytics, Visitors, lt, isNotNull, and } from "@/lib/db";
 import geoip from "geoip-lite";
 import { createHash } from "node:crypto";
 import { isIP } from "node:net";
@@ -263,8 +263,8 @@ export async function anonymizeOldFingerprints(): Promise<void> {
       .set({ fingerprint: null })
       .where(
         and(
-          sql`${Analytics.date} < ${cutoff}`,
-          sql`${Analytics.fingerprint} is not null`,
+          lt(Analytics.date, cutoff),
+          isNotNull(Analytics.fingerprint),
         ),
       );
 
@@ -273,8 +273,8 @@ export async function anonymizeOldFingerprints(): Promise<void> {
       .set({ fingerprint: null })
       .where(
         and(
-          sql`${Visitors.date} < ${cutoffDateKey}`,
-          sql`${Visitors.fingerprint} is not null`,
+          lt(Visitors.date, cutoffDateKey),
+          isNotNull(Visitors.fingerprint),
         ),
       );
   } catch (error) {

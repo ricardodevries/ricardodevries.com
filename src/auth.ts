@@ -4,7 +4,7 @@ import {
   AuthSession,
   AuthUser,
   AuthVerification,
-} from "astro:db";
+} from "@/lib/db";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { betterAuth } from "better-auth";
 import {

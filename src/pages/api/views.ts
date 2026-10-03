@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { db, Views, Visitors, sql, eq } from "astro:db";
+import { db, Views, Visitors, sql, eq } from "@/lib/db";
 import { detectBot } from "../../lib/ai-crawlers";
 import {
   computeFingerprint,
