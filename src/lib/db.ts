@@ -12,8 +12,6 @@ function connect() {
 
   const client = createClient({
     url: url || "file:local.db",
-    authToken: process.env.DATABASE_AUTH_TOKEN ||
-      (import.meta.env.DEV ? import.meta.env.DATABASE_AUTH_TOKEN : undefined),
   });
 
   return drizzle(client, { schema });

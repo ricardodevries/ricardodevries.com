@@ -39,6 +39,7 @@ export const AuthAccount = sqliteTable("AuthAccount", {
   accessTokenExpiresAt: date(),
   refreshTokenExpiresAt: date(),
   scope: text(),
+  password: text(),
   createdAt: date().notNull(),
   updatedAt: date().notNull(),
 }, (table) => [

@@ -3,7 +3,6 @@ import type { Session, User } from "better-auth";
 declare global {
   interface ImportMetaEnv {
     readonly DATABASE_URL?: string;
-    readonly DATABASE_AUTH_TOKEN?: string;
     readonly BETTER_AUTH_URL?: string;
     readonly BETTER_AUTH_SECRET?: string;
     readonly GITHUB_CLIENT_ID?: string;

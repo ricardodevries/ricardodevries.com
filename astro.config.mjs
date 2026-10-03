@@ -5,6 +5,7 @@ import svelte, { vitePreprocess } from "@astrojs/svelte";
 import node from "@astrojs/node";
 import { rehypePlugins, remarkPlugins } from "./config/plugins";
 import mermaid from "astro-mermaid";
+import { unified } from "@astrojs/markdown-remark";
 
 // https://astro.build/config
 export default defineConfig({
@@ -19,11 +20,14 @@ export default defineConfig({
     ],
   },
   prefetch: true,
+  compressHTML: true,
   markdown: {
-    smartypants: true,
     syntaxHighlight: false,
-    rehypePlugins,
-    remarkPlugins,
+    processor: unified({
+      smartypants: true,
+      rehypePlugins,
+      remarkPlugins,
+    }),
   },
   integrations: [
     mdx(),
