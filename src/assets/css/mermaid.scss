@@ -1,0 +1,181 @@
+html .content .mermaid-panel,
+html .content pre.mermaid {
+  --diagram-bg: #f7f6f0;
+  --diagram-node: #fff;
+  --diagram-group: #eeefe6;
+  --diagram-border: #dcdfd2;
+  --diagram-text: #484b40;
+  --diagram-muted-text: #777c6e;
+  --diagram-line: #a5ad99;
+  --diagram-accent: #d0e0bd;
+  --diagram-accent-border: #abc393;
+  --diagram-accent-text: #435b35;
+  --diagram-shadow: rgb(48 54 36 / 6%);
+}
+
+// Outrank the integration's styles, which are injected after the page loads.
+html .content pre.mermaid {
+  padding: clamp(16px, 4vw, 32px);
+  border: 1px solid var(--diagram-border);
+  border-radius: 14px;
+  background: var(--diagram-bg);
+  color: var(--diagram-text);
+  font-family: var(--font-ibm-plex-sans), sans-serif;
+  line-height: 1.5;
+  overflow-x: auto;
+  display: block;
+  margin: 0;
+
+  &[data-processed] {
+    background: var(--diagram-bg);
+    border-radius: 14px;
+  }
+
+  > svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin-inline: auto;
+  }
+
+  // Keep labels legible in wide flowcharts; the panel scrolls on small screens.
+  > svg[aria-roledescription^="flowchart"] {
+    min-width: 640px;
+  }
+}
+
+html .content > .mermaid-panel {
+  width: min(1100px, calc(100vw - 42px));
+  max-width: none;
+  border: 1px solid var(--diagram-border);
+  border-radius: 14px;
+  background: var(--diagram-bg);
+  overflow: hidden;
+
+  pre.mermaid {
+    border: 0;
+    border-radius: 0;
+    cursor: zoom-in;
+  }
+}
+
+html[data-theme="dark"] .content .mermaid-panel,
+html[data-theme="dark"] .content pre.mermaid {
+  --diagram-bg: #20231e;
+  --diagram-node: #2c3028;
+  --diagram-group: #262b22;
+  --diagram-border: #444c3d;
+  --diagram-text: #e3e7dc;
+  --diagram-muted-text: #a1ab96;
+  --diagram-line: #8b9a7c;
+  --diagram-accent: #3d5130;
+  --diagram-accent-border: #6d8b55;
+  --diagram-accent-text: #d0e3ba;
+  --diagram-shadow: rgb(0 0 0 / 12%);
+}
+
+.mermaid-panel__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 16px 8px;
+  color: var(--diagram-muted-text);
+  font-family: var(--font-ibm-plex-sans), sans-serif;
+}
+
+.mermaid-panel__expand {
+  min-height: 32px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--diagram-text);
+  }
+}
+
+.mermaid-panel__credit {
+  margin-left: auto;
+  font-size: 10px;
+  opacity: 0.65;
+  white-space: nowrap;
+}
+
+.mermaid-viewer {
+  width: min(1400px, calc(100vw - 24px));
+  max-width: none;
+  max-height: calc(100dvh - 24px);
+  margin: auto;
+  padding: 20px;
+  border: 1px solid var(--faded-line);
+  border-radius: 16px;
+  background: var(--bg);
+  color: var(--text);
+  overflow: auto;
+
+  &::backdrop {
+    background: rgb(0 0 0 / 65%);
+    backdrop-filter: blur(4px);
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+
+    h2 {
+      margin: 0;
+      font-size: 16px;
+    }
+  }
+
+  &__close {
+    padding: 8px 12px;
+    border: 1px solid var(--faded-line);
+    border-radius: 6px;
+    background: var(--faded-bg);
+    color: inherit;
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .content > .mermaid-panel {
+    width: 100%;
+
+    pre.mermaid {
+      cursor: default;
+
+      > svg[aria-roledescription^="flowchart"] {
+        min-width: 960px;
+      }
+    }
+  }
+
+  .mermaid-panel__expand {
+    display: none;
+  }
+}
+
+.mermaid-viewer-open {
+  overflow: hidden;
+}
+
+.mermaid-panel__expand:focus-visible,
+.mermaid-viewer__close:focus-visible,
+html .content pre.mermaid:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: -3px;
+}
+
+@media (max-width: 500px) {
+  .mermaid-viewer {
+    padding: 12px;
+  }
+}

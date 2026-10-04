@@ -9,6 +9,7 @@ import PostViews from "./PostViews.astro";
 import InlineCode from "./InlineCode.astro";
 import Prompt from "./Prompt.astro";
 import Comments from "./Comments.svelte";
+import MermaidViewer from "./MermaidViewer.astro";
 
 export interface Props {
   post: CollectionEntry<"blog">;
@@ -96,4 +97,5 @@ const updatedstr = updatedDate?.toISOString();
       <Comments postSlug={post.id} client:visible />
     </div>
   </article>
+  <MermaidViewer />
 </PostLayout>

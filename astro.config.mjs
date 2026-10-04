@@ -33,7 +33,55 @@ export default defineConfig({
     mdx(),
     svelte({ preprocess: vitePreprocess() }),
     sitemap(),
-    mermaid(),
+    mermaid({
+      enableLog: false,
+      mermaidConfig: {
+        fontFamily: "var(--font-ibm-plex-sans), sans-serif",
+        themeVariables: { fontSize: "18px" },
+        flowchart: {
+          curve: "rounded",
+          nodeSpacing: 32,
+          rankSpacing: 48,
+          padding: 20,
+        },
+        // Mermaid scopes these rules to each SVG, so they override its theme.
+        themeCSS: `
+          .node rect, .node circle, .node ellipse, .node polygon, .node path {
+            fill: var(--diagram-node);
+            stroke: var(--diagram-border);
+            stroke-width: 1px;
+            filter: drop-shadow(0 3px 5px var(--diagram-shadow));
+          }
+          .node rect { rx: 10px; ry: 10px; }
+          .node .label, .nodeLabel, .edgeLabel { color: var(--diagram-text); }
+          .label text, text { fill: var(--diagram-text); }
+          .cluster rect {
+            fill: var(--diagram-group);
+            stroke: var(--diagram-border);
+            stroke-width: 1px;
+            rx: 14px;
+            ry: 14px;
+          }
+          .cluster-label span, .cluster-label text {
+            color: var(--diagram-accent-text);
+            fill: var(--diagram-accent-text);
+            font-weight: 500;
+          }
+          .flowchart-link { stroke: var(--diagram-line); stroke-width: 1.5px; }
+          .marker { fill: var(--diagram-line); stroke: var(--diagram-line); }
+          .edgeLabel, .edgeLabel p, .labelBkg { background: var(--diagram-bg); }
+          .edgeLabel { font-size: 13px; }
+          .edgeLabel rect { fill: var(--diagram-bg); }
+          .accent rect, .accent polygon, .accent circle {
+            fill: var(--diagram-accent);
+            stroke: var(--diagram-accent-border);
+          }
+          .accent .label, .accent .nodeLabel { color: var(--diagram-accent-text); }
+          .muted rect { fill: var(--diagram-group); }
+          .muted .label, .muted .nodeLabel { color: var(--diagram-muted-text); }
+        `,
+      },
+    }),
   ],
   vite: {
     optimizeDeps: {
