@@ -12,3 +12,11 @@ updates:
     schedule:
       interval: "weekly"
     labels: []
+    # Keep these within the versions supported by Astro's checker and astro-mermaid.
+    ignore:
+      - dependency-name: "typescript"
+        versions: [">=7"]
+      - dependency-name: "mermaid"
+        versions: [">=12"]
+      - dependency-name: "@mermaid-js/layout-elk"
+        versions: [">=1"]
