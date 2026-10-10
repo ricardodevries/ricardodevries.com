@@ -46,15 +46,29 @@ export const GET: APIRoute = async ({ locals, url }) => {
     ) ?? visibility;
   }
 
-  const comments = await db
-    .select()
-    .from(Comments)
-    .where(and(eq(Comments.postSlug, postSlug), visibility))
-    .orderBy(asc(Comments.createdAt))
-    .limit(100);
-  const publicComments = await Promise.all(
-    comments.map((comment) => toPublicComment(comment as CommentRow)),
-  );
+  let publicComments;
+
+  try {
+    const comments = await db
+      .select()
+      .from(Comments)
+      .where(and(eq(Comments.postSlug, postSlug), visibility))
+      .orderBy(asc(Comments.createdAt))
+      .limit(100);
+    publicComments = await Promise.all(
+      comments.map((comment) => toPublicComment(comment as CommentRow)),
+    );
+  } catch (error) {
+    console.error("Could not load comments:", error);
+
+    return new Response(JSON.stringify({ error: "Could not load comments." }), {
+      status: 503,
+      headers: {
+        "content-type": "application/json",
+        "cache-control": "no-store, max-age=0",
+      },
+    });
+  }
 
   return new Response(
     JSON.stringify({
