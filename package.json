@@ -22,7 +22,7 @@
     "@better-auth/drizzle-adapter": "^1.7.7",
     "@dev.icons/core": "^1.1.0",
     "@libsql/client": "^0.18.0",
-    "@lucide/astro": "^1.51.0",
+    "@lucide/astro": "^1.52.0",
     "@mermaid-js/layout-elk": "^1.0.1",
     "@resvg/resvg-js": "^2.6.2",
     "@shikijs/rehype": "^4.5.0",
