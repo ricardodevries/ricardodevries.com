@@ -1,83 +1,25 @@
 ---
-import { Moon, Sun } from "@lucide/astro";
+import { Monitor, Moon, Sun } from "@lucide/astro";
 ---
 
 <div data-toggle-picker class="theme-selector">
   <span class="sr-only">Toggle theme helpers</span>
+
   <ul class="theme-list flex flex-center">
+    <li class="system">
+      <button type="button" data-toggle-theme="system" aria-label="Use system theme" title="System theme">
+        <Monitor size={16} />
+      </button>
+    </li>
     <li class="light">
-      <button data-toggle-theme="light">
+      <button type="button" data-toggle-theme="light" aria-label="Use light theme">
         <Sun size={16} />
       </button>
     </li>
     <li class="dark">
-      <button data-toggle-theme="dark">
+      <button type="button" data-toggle-theme="dark" aria-label="Use dark theme">
         <Moon size={16} />
       </button>
     </li>
   </ul>
 </div>
-
-<script lang="ts" is:inline>
-function setTheme(theme) {
-  const themeBtns = document.querySelectorAll("[data-toggle-theme]");
-
-  if (!themeBtns) {
-    return;
-  }
-
-  // remove all the data-theme attributes
-  themeBtns.forEach((btn) => {
-    btn.removeAttribute("data-toggle-theme-active");
-  });
-
-  // find the button with the selected theme and add the data-theme attribute
-  const selected = document.querySelector(`[data-toggle-theme="${theme}"]`);
-  selected?.setAttribute("data-toggle-theme-active", "selected");
-}
-function switchTheme() {
-  const themes = ["dark", "light"];
-
-  const key = "v-for";
-  const themeBtns = document.querySelectorAll("[data-toggle-theme]");
-  const doc = document.documentElement;
-
-  const store = (selected) => {
-    doc.setAttribute("data-theme", selected);
-    localStorage.setItem(key, selected);
-  };
-
-  const fromLocal = localStorage.getItem(key) ?? themes[0];
-
-  const dark = window.matchMedia("(darkers-color-scheme: dark)").matches;
-  const light = window.matchMedia("(darkers-color-scheme: light)").matches;
-
-  if (!fromLocal && dark) {
-    store("dark");
-  } else if (!fromLocal && light) {
-    store("light");
-  } else if (fromLocal) {
-    store(fromLocal);
-    setTheme(fromLocal);
-  }
-
-  if (themeBtns) {
-    themeBtns.forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        e.preventDefault();
-        const selected = btn.getAttribute("data-toggle-theme");
-        store(selected);
-        setTheme(selected);
-      });
-    });
-  }
-}
-
-(function run() {
-  switchTheme();
-})();
-
-document.addEventListener("astro:page-load", () => {
-  switchTheme();
-});
-</script>

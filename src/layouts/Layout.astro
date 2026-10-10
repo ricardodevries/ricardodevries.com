@@ -47,6 +47,74 @@ const desc = metaDescription ?? description ?? null;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
+    <script is:inline>
+      (() => {
+        const key = "v-for";
+        const preference = window.matchMedia("(prefers-color-scheme: dark)");
+
+        let selected = null;
+
+        try {
+          const stored = localStorage.getItem(key);
+
+          if (stored === "dark" || stored === "light") {
+            selected = stored;
+          }
+        } catch {
+          // Follow the browser preference when storage is unavailable.
+        }
+
+        function applyTheme(target = document) {
+          const theme = selected ?? (preference.matches ? "dark" : "light");
+
+          target.documentElement.setAttribute("data-theme", theme);
+          target.documentElement.style.colorScheme = theme;
+
+          target.querySelectorAll("[data-toggle-theme]").forEach((button) => {
+            const active = button.getAttribute("data-toggle-theme") === (selected ?? "system");
+
+            button.toggleAttribute("data-toggle-theme-active", active);
+            button.setAttribute("aria-pressed", String(active));
+          });
+        }
+
+        applyTheme();
+
+        document.addEventListener("astro:page-load", () => applyTheme());
+        document.addEventListener("astro:before-swap", (event) => {
+          applyTheme(event.newDocument);
+        });
+
+        preference.addEventListener("change", () => applyTheme());
+
+        document.addEventListener("click", (event) => {
+          const button = event.target instanceof Element
+            ? event.target.closest("[data-toggle-theme]")
+            : null;
+
+          const theme = button?.getAttribute("data-toggle-theme");
+
+          if (theme !== "dark" && theme !== "light" && theme !== "system") {
+            return;
+          }
+
+          selected = theme === "system" ? null : theme;
+
+          try {
+            if (selected === null) {
+              localStorage.removeItem(key);
+            } else {
+              localStorage.setItem(key, selected);
+            }
+          } catch {
+            // Keep the selection for this visit when storage is unavailable.
+          }
+
+          applyTheme();
+        });
+      })();
+    </script>
+
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
 
