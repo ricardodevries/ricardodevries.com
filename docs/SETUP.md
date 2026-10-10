@@ -1,0 +1,213 @@
+## Setup
+
+I use this setup on a Raspberry Pi. Adjust the files for your own environment. Create a dedicated service user with a home directory:
+
+```sh
+sudo useradd --system --create-home --home-dir /home/blog --shell /bin/bash --user-group blog
+```
+
+Create the directories the site and database use:
+
+```sh
+sudo install -d -o root -g root -m 0755 /var/www
+sudo install -d -o blog -g blog -m 0755 /var/www/releases
+sudo install -d -o blog -g blog -m 0700 /home/blog/libsql
+```
+
+## Manual deployment
+
+Once Node.js, libSQL, nginx, and the web service below are configured, deploy from the local repository to `192.168.1.4`. The `ricardo` account can run commands as `blog` without a password; `blog` has the release activation and service restart permissions shown below. No GitHub Actions runner is needed for manual deployment.
+
+Run from the repository root:
+
+```sh
+release="/var/www/releases/manual-$(date -u +%Y%m%dT%H%M%SZ)-$(git rev-parse --short HEAD)"
+ssh ricardo@192.168.1.4 "sudo -n -iu blog mkdir -p '$release'"
+rsync -az --exclude=.DS_Store --rsync-path='sudo -n -u blog rsync' \
+  src public config db package.json package-lock.json astro.config.mjs \
+  svelte.config.js tsconfig.json drizzle.config.ts eslint.config.js \
+  "ricardo@192.168.1.4:$release/"
+ssh ricardo@192.168.1.4 "sudo -n -iu blog bash -s -- '$release'" <<'REMOTE'
+set -eu
+export PATH=/home/blog/.nvm/versions/node/v24.16.0/bin:$PATH
+cd "$1"
+npm ci --no-audit --no-fund
+npm run build
+DATABASE_URL=http://127.0.0.1:8080 npm run db:push
+REMOTE
+```
+
+This copies the current working tree, including uncommitted content, and builds on the server so native dependencies match its architecture. It excludes local environment files, databases, and dependencies. Production secrets stay in the web service environment. Review any schema change prompts before continuing; do not approve destructive changes automatically.
+
+After the build and schema update succeed, activate the release:
+
+```sh
+ssh ricardo@192.168.1.4 "sudo -n -iu blog bash -s -- '$release'" <<'REMOTE'
+set -eu
+previous=$(readlink -f /var/www/current || true)
+printf 'Previous release: %s\n' "$previous"
+sudo -n /usr/bin/ln -sfnT "$1" /var/www/current
+sudo -n /usr/bin/systemctl restart ricardodevries-web.service
+systemctl is-active ricardodevries-web.service
+curl --fail --silent --show-error --retry 5 --retry-connrefused \
+  --retry-delay 2 --resolve ricardodevries.com:443:127.0.0.1 \
+  https://ricardodevries.com/ -o /dev/null
+REMOTE
+```
+
+Keep the previous release for rollback. If verification fails, use the same `ln -sfnT` command with the previous release path and restart the service. A release rollback does not undo database schema changes.
+
+## Server configuration
+
+Install `sqld` as the `blog` user so the binary lands under `/home/blog`:
+
+```sh
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/tursodatabase/libsql/releases/download/libsql-server-v0.24.32/libsql-server-installer.sh | sh
+```
+
+After you install the GitHub Actions runner under `/home/blog/actions-runner`, allow the `blog` user to install and start the runner service, activate releases, reload nginx, and restart the web service:
+
+```sh
+sudo visudo -f /etc/sudoers.d/ricardodevries-github-runner
+```
+
+```sh
+Cmnd_Alias RICARDODEVRIES_RUNNER_SVC = /home/blog/actions-runner/svc.sh install, /home/blog/actions-runner/svc.sh start
+Cmnd_Alias RICARDODEVRIES_ACTIVATE_RELEASE = /usr/bin/ln -sfnT /var/www/releases/* /var/www/current
+Cmnd_Alias RICARDODEVRIES_WEB_SERVICE = /usr/bin/systemctl restart ricardodevries-web.service
+blog ALL=(root) NOPASSWD: RICARDODEVRIES_RUNNER_SVC, RICARDODEVRIES_ACTIVATE_RELEASE, RICARDODEVRIES_WEB_SERVICE
+```
+
+Validate the sudoers file, then install and start the runner service as `blog`:
+
+```sh
+sudo visudo -cf /etc/sudoers.d/ricardodevries-github-runner
+sudo -iu blog
+cd /home/blog/actions-runner
+sudo ./svc.sh install
+sudo ./svc.sh start
+```
+
+Create the service file at `/etc/systemd/system/ricardodevries-web.service`:
+
+```sh
+[Unit]
+Description=ricardodevries.com
+After=network.target libsql.service
+Wants=libsql.service
+
+[Service]
+Type=simple
+User=blog
+WorkingDirectory=/var/www/current
+Environment=PATH=/home/blog/.nvm/versions/node/v24.16.0/bin
+ExecStart=/home/blog/.nvm/versions/node/v24.16.0/bin/node /var/www/current/dist/server/entry.mjs
+Restart=on-failure
+RestartSec=5
+Environment=HOST="127.0.0.1"
+Environment=PORT="4321"
+Environment=NODE_ENV="production"
+Environment=FINGERPRINT_SECRET="example"
+Environment=DATABASE_URL="http://127.0.0.1:8080"
+Environment=BETTER_AUTH_URL="https://ricardodevries.com"
+Environment=BETTER_AUTH_SECRET="example"
+Environment=GITHUB_CLIENT_ID="example"
+Environment=GITHUB_CLIENT_SECRET="example"
+Environment=MICROSOFT_CLIENT_ID="example"
+Environment=MICROSOFT_CLIENT_SECRET="example"
+Environment=COMMENT_ADMIN_EMAILS="me@example.com"
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Create the libSQL service at `/etc/systemd/system/libsql.service`:
+
+```sh
+[Unit]
+Description=libSQL Server
+After=network.target
+
+[Service]
+User=blog
+WorkingDirectory=/home/blog/libsql
+ExecStart=/home/blog/.cargo/bin/sqld --db-path /home/blog/libsql --http-listen-addr 127.0.0.1:8080
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Apply the database schema after `libsql.service` is running, from the project or extracted release directory:
+
+```sh
+DATABASE_URL=http://127.0.0.1:8080 npm run db:push
+```
+
+The database uses Drizzle ORM with `@libsql/client` directly. `db/schema.ts` defines all tables, and `npm run db:push` applies the schema without migration files.
+
+For local development, run `npm run db:push` once before `npm run dev`. Without `DATABASE_URL`, both commands use `local.db` in the project root. The file persists between development sessions and is ignored by Git. To use a libSQL server instead, set `DATABASE_URL` in `.env` or the shell before running both commands.
+
+In GitHub's `production` environment, set the `DATABASE_URL` variable to `http://127.0.0.1:8080`. Builds do not need a database connection; the production runner applies the schema before activating the release. The running production app requires `DATABASE_URL` in its service environment.
+
+This setup starts with an empty database. No data transfer from Astro DB is included. Drizzle may request confirmation for destructive future schema changes; review those changes before deploying once production contains data.
+
+Create the nginx configuration at `/etc/nginx/conf.d/ricardodevries.com.conf`:
+
+```
+server {
+  listen 443 ssl;
+  listen 443 quic;
+
+  http2 on;
+  http3 on;
+  http3_hq off;
+  quic_retry on;
+
+  server_name ricardodevries.com;
+
+  ssl_certificate /etc/ssl/private/ricardodevries.com/cert.pem;
+  ssl_certificate_key /etc/ssl/private/ricardodevries.com/key.pem;
+  ssl_session_timeout 1d;
+  ssl_session_cache shared:SSL:10m;
+  ssl_session_tickets off;
+  ssl_buffer_size 8k;
+  ssl_protocols TLSv1.3 TLSv1.2;
+  ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
+  ssl_prefer_server_ciphers on;
+  ssl_dhparam /etc/ssl/private/ricardodevries.com/dhparam.pem;
+
+  add_header Strict-Transport-Security "max-age=63072000; includeSubdomains; preload" always;
+  add_header X-Content-Type-Options "nosniff" always;
+  add_header X-Frame-Options "DENY" always;
+  add_header X-Xss-Protection "1; mode=block" always;
+  add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+  add_header Alt-Svc 'h3=":443"; ma=86400' always;
+
+  resolver 1.1.1.1 [2606:4700:4700::1111] 1.0.0.1 [2606:4700:4700::1001] valid=300s ipv6=on;
+  resolver_timeout 5s;
+
+  location / {
+    proxy_pass http://127.0.0.1:4321;
+    proxy_ssl_verify off;
+    proxy_ssl_server_name on;
+
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Forwarded-Port $server_port;
+    proxy_set_header Upgrade $http_upgrade;
+
+    proxy_connect_timeout 300;
+    proxy_send_timeout 300;
+    proxy_read_timeout 300;
+
+    proxy_buffering off;
+    proxy_request_buffering off;
+  }
+}
+```
