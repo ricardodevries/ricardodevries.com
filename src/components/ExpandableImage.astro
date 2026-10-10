@@ -5,11 +5,12 @@ import type { ImageMetadata } from "astro";
 interface Props {
   id: string;
   src: ImageMetadata;
+  darkSrc?: ImageMetadata;
   alt: string;
   caption: string;
 }
 
-const { id, src, alt, caption } = Astro.props;
+const { id, src, darkSrc, alt, caption } = Astro.props;
 const dialogId = `${id}-viewer`;
 const titleId = `${dialogId}-title`;
 ---
@@ -22,7 +23,8 @@ const titleId = `${dialogId}-title`;
     aria-haspopup="dialog"
     aria-controls={dialogId}
   >
-    <Image src={src} alt={alt} width={720} loading="lazy" />
+    <Image src={src} alt={alt} width={720} loading="lazy" class:list={{ "theme-light": !!darkSrc }} />
+    {darkSrc && <Image src={darkSrc} alt={alt} width={720} loading="lazy" class="theme-dark" />}
   </button>
   <figcaption>{caption}</figcaption>
   <dialog id={dialogId} aria-labelledby={titleId}>
@@ -30,7 +32,8 @@ const titleId = `${dialogId}-title`;
       <h2 id={titleId}>{caption}</h2>
       <button type="button" class="close" autofocus>Close</button>
     </header>
-    <Image src={src} alt={alt} loading="lazy" />
+    <Image src={src} alt={alt} loading="lazy" class:list={{ "theme-light": !!darkSrc }} />
+    {darkSrc && <Image src={darkSrc} alt={alt} loading="lazy" class="theme-dark" />}
   </dialog>
 </figure>
 
@@ -95,6 +98,18 @@ const titleId = `${dialogId}-title`;
     display: block;
     width: 100%;
     height: auto;
+  }
+
+  .theme-dark {
+    display: none;
+  }
+
+  :global(html[data-theme="dark"]) .theme-light {
+    display: none;
+  }
+
+  :global(html[data-theme="dark"]) .theme-dark {
+    display: block;
   }
 
   dialog {
