@@ -1,0 +1,156 @@
+---
+import { Image } from "astro:assets";
+import type { ImageMetadata } from "astro";
+
+interface Props {
+  id: string;
+  src: ImageMetadata;
+  alt: string;
+  caption: string;
+}
+
+const { id, src, alt, caption } = Astro.props;
+const dialogId = `${id}-viewer`;
+const titleId = `${dialogId}-title`;
+---
+
+<figure data-image-viewer>
+  <button
+    type="button"
+    class="image-trigger"
+    aria-label="Expand image"
+    aria-haspopup="dialog"
+    aria-controls={dialogId}
+  >
+    <Image src={src} alt={alt} width={720} loading="lazy" />
+  </button>
+  <figcaption>{caption}</figcaption>
+  <dialog id={dialogId} aria-labelledby={titleId}>
+    <header>
+      <h2 id={titleId}>{caption}</h2>
+      <button type="button" class="close" autofocus>Close</button>
+    </header>
+    <Image src={src} alt={alt} loading="lazy" />
+  </dialog>
+</figure>
+
+<script>
+  function initImages() {
+    document.querySelectorAll<HTMLElement>("[data-image-viewer]").forEach((figure) => {
+      if (figure.dataset.enhanced) {
+        return;
+      }
+
+      const dialog = figure.querySelector<HTMLDialogElement>("dialog");
+      const trigger = figure.querySelector<HTMLButtonElement>(".image-trigger");
+
+      if (!dialog || !trigger) {
+        return;
+      }
+
+      figure.dataset.enhanced = "true";
+      trigger.addEventListener("click", () => {
+        dialog.showModal();
+        document.documentElement.classList.add("image-viewer-open");
+      });
+      figure.querySelector(".close")?.addEventListener("click", () => dialog.close());
+      dialog.addEventListener("click", (event) => {
+        if (event.target === dialog) {
+          const bounds = dialog.getBoundingClientRect();
+
+          if (event.clientX < bounds.left || event.clientX > bounds.right ||
+              event.clientY < bounds.top || event.clientY > bounds.bottom) {
+            dialog.close();
+          }
+        }
+      });
+      dialog.addEventListener("close", () => {
+        document.documentElement.classList.remove("image-viewer-open");
+        trigger.focus({ preventScroll: true });
+      });
+    });
+  }
+
+  initImages();
+  document.addEventListener("astro:page-load", initImages);
+  document.addEventListener("astro:before-swap", () => {
+    document.querySelectorAll<HTMLDialogElement>("[data-image-viewer] dialog[open]")
+      .forEach((dialog) => dialog.close());
+    document.documentElement.classList.remove("image-viewer-open");
+  });
+</script>
+
+<style>
+  .image-trigger {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius);
+    background: transparent;
+    cursor: zoom-in;
+  }
+
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  dialog {
+    width: min(720px, calc(100vw - 24px));
+    max-width: none;
+    max-height: calc(100dvh - 24px);
+    margin: auto;
+    padding: 20px;
+    border: 1px solid var(--faded-line);
+    border-radius: 16px;
+    background: var(--bg);
+    color: var(--text);
+    overflow: auto;
+  }
+
+  dialog::backdrop {
+    background: rgb(0 0 0 / 65%);
+    backdrop-filter: blur(4px);
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 16px;
+  }
+
+  .close {
+    padding: 8px 12px;
+    border: 1px solid var(--faded-line);
+    border-radius: 6px;
+    background: var(--faded-bg);
+    color: inherit;
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  button:focus-visible {
+    outline: 2px solid var(--text);
+    outline-offset: 3px;
+  }
+
+  :global(html.image-viewer-open) {
+    overflow: hidden;
+  }
+
+  @media (max-width: 500px) {
+    dialog {
+      padding: 12px;
+    }
+  }
+</style>

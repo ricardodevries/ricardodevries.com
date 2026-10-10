@@ -1,0 +1,42 @@
+<div class="content-aside">
+  <div class="main"><slot /></div>
+  <div class="aside"><slot name="aside" /></div>
+</div>
+
+<style>
+  .content-aside {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 240px;
+    align-items: start;
+    gap: calc(var(--gap) * 1.5);
+  }
+
+  .main,
+  .aside {
+    min-width: 0;
+  }
+
+  .aside :global(figure) {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+  }
+
+  .aside :global(img) {
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius);
+  }
+
+  @media (max-width: 767px) {
+    .content-aside {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .aside {
+      width: 100%;
+      max-width: 320px;
+      justify-self: center;
+    }
+  }
+</style>
