@@ -128,6 +128,9 @@
   };
 
   const setup = (root: HTMLElement) => {
+    if (root.classList.contains("is-ready")) {
+      return;
+    }
     const panels = Array.from(
       root.querySelectorAll<HTMLElement>(":scope > .copy-code-wrapper")
     );
@@ -216,7 +219,11 @@
       renderStatus();
     };
 
-    document.addEventListener("selectionchange", () => {
+    const onSelectionChange = () => {
+      if (!root.isConnected) {
+        document.removeEventListener("selectionchange", onSelectionChange);
+        return;
+      }
       const info = infos[current];
       const caret = info.getCaret();
       if (!caret) {
@@ -231,7 +238,8 @@
       info.ln = caret.line;
       info.col = caret.col;
       renderStatus();
-    });
+    };
+    document.addEventListener("selectionchange", onSelectionChange);
 
     root.prepend(bar);
     root.append(status);
@@ -239,9 +247,12 @@
     select(0);
   };
 
-  document
-    .querySelectorAll<HTMLElement>("[data-code-tabs]")
-    .forEach(setup);
+  const init = () =>
+    document
+      .querySelectorAll<HTMLElement>("[data-code-tabs]")
+      .forEach(setup);
+
+  document.addEventListener("astro:page-load", init);
 </script>
 
 <style is:global>
