@@ -1,0 +1,518 @@
+---
+---
+
+<div class="code-tabs" data-code-tabs>
+  <slot />
+</div>
+
+<script>
+  interface PanelInfo {
+    lang: string;
+    lineCount: number;
+    indent: number | null;
+    ln: number;
+    col: number;
+    getCaret: () => { line: number; col: number } | null;
+  }
+
+  const setupPanel = (panel: HTMLElement): PanelInfo => {
+    const lines = Array.from(
+      panel.querySelectorAll<HTMLElement>("pre code > .line")
+    );
+    const texts = lines.map((line) => line.textContent ?? "");
+    const indents = texts.map((text) =>
+      text.trim() ? (text.match(/^ */)?.[0].length ?? 0) : -1
+    );
+
+    lines.forEach((line, i) => {
+      line.dataset.line = String(i + 1);
+    });
+
+    // A line is a fold start when the lines below it are indented deeper
+    // (or are "- " items directly under a "key:" line at the same indent).
+    const isChild = (j: number, i: number) =>
+      indents[j] > indents[i] ||
+      (indents[j] === indents[i] &&
+        /:\s*$/.test(texts[i]) &&
+        !texts[i].trimStart().startsWith("- ") &&
+        texts[j].trimStart().startsWith("- "));
+
+    const ends = new Map<number, number>();
+    indents.forEach((indent, i) => {
+      if (indent < 0) {
+        return;
+      }
+      let next = i + 1;
+      while (next < lines.length && indents[next] < 0) {
+        next++;
+      }
+      if (next >= lines.length || !isChild(next, i)) {
+        return;
+      }
+      let end = next;
+      for (let j = next + 1; j < lines.length; j++) {
+        if (indents[j] < 0) {
+          continue;
+        }
+        if (!isChild(j, i)) {
+          break;
+        }
+        end = j;
+      }
+      if (end - i >= 2) {
+        ends.set(i, end);
+      }
+    });
+
+    const folded = new Set<number>();
+    const applyFolds = () => {
+      let hideUntil = -1;
+      lines.forEach((line, i) => {
+        const hidden = i <= hideUntil;
+        const isFolded = !hidden && folded.has(i);
+        line.hidden = hidden;
+        line.classList.toggle("is-folded", isFolded);
+        if (isFolded) {
+          const end = ends.get(i) as number;
+          line.dataset.fold = `${end - i} lines`;
+          hideUntil = Math.max(hideUntil, end);
+        }
+      });
+    };
+
+    ends.forEach((_, i) => {
+      const toggle = document.createElement("span");
+      toggle.className = "fold-toggle";
+      toggle.setAttribute("role", "button");
+      toggle.setAttribute("aria-label", "Toggle fold");
+      toggle.addEventListener("mousedown", (e) => e.preventDefault());
+      toggle.addEventListener("click", () => {
+        if (folded.has(i)) {
+          folded.delete(i);
+        } else {
+          folded.add(i);
+        }
+        applyFolds();
+      });
+      lines[i].prepend(toggle);
+    });
+
+    const positive = indents.filter((n) => n > 0);
+
+    return {
+      lang: panel.className.match(/code-language-(\S+)/)?.[1] ?? "plaintext",
+      lineCount: lines.length,
+      indent: positive.length ? Math.min(...positive) : null,
+      ln: 1,
+      col: 1,
+      getCaret: () => {
+        const selection = document.getSelection();
+        const node = selection?.anchorNode;
+        if (!selection || !node) {
+          return null;
+        }
+        const el = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
+        const lineEl = el?.closest<HTMLElement>(".line");
+        if (!lineEl || !panel.contains(lineEl)) {
+          return null;
+        }
+        const range = document.createRange();
+        range.setStart(lineEl, 0);
+        range.setEnd(node, selection.anchorOffset);
+        return {
+          line: Number(lineEl.dataset.line),
+          col: range.toString().length + 1,
+        };
+      },
+    };
+  };
+
+  const setup = (root: HTMLElement) => {
+    const panels = Array.from(
+      root.querySelectorAll<HTMLElement>(":scope > .copy-code-wrapper")
+    );
+
+    if (panels.length < 2) {
+      return;
+    }
+
+    const infos = panels.map(setupPanel);
+    let current = 0;
+
+    const list = document.createElement("div");
+    list.className = "code-tabs-list";
+    list.setAttribute("role", "tablist");
+
+    const buttons = panels.map((panel, i) => {
+      const label =
+        panel.querySelector(".code-filename span")?.textContent?.trim() ||
+        `Tab ${i + 1}`;
+      const button = document.createElement("button");
+      button.type = "button";
+      button.role = "tab";
+      button.className = "code-tabs-btn mono small-text";
+      const icon = panel.querySelector<SVGElement>(".code-filename svg");
+      if (icon) {
+        button.append(icon.cloneNode(true));
+      }
+      const full = document.createElement("span");
+      full.className = "tab-label-full";
+      full.textContent = label;
+      const short = document.createElement("span");
+      short.className = "tab-label-short";
+      short.textContent = label.split("/").pop() || label;
+      button.append(full, short);
+      button.addEventListener("click", () => select(i));
+      list.append(button);
+      return button;
+    });
+
+    const bar = document.createElement("div");
+    bar.className = "code-tabs-bar";
+    const dots = document.createElement("div");
+    dots.className = "code-tabs-dots";
+    dots.setAttribute("aria-hidden", "true");
+    dots.innerHTML = "<span></span><span></span><span></span>";
+    bar.append(dots, list);
+
+    const status = document.createElement("div");
+    status.className = "code-tabs-status mono";
+    const left = document.createElement("div");
+    const right = document.createElement("div");
+    status.append(left, right);
+
+    const renderStatus = () => {
+      const info = infos[current];
+      left.replaceChildren(
+        ...[`Ln ${info.ln}, Col ${info.col}`, `${info.lineCount} lines`].map(
+          (text) => Object.assign(document.createElement("span"), { textContent: text })
+        )
+      );
+      right.replaceChildren(
+        ...[
+          info.indent ? `Spaces: ${info.indent}` : null,
+          "UTF-8",
+          "LF",
+          info.lang.toUpperCase(),
+        ]
+          .filter((text): text is string => Boolean(text))
+          .map((text) => Object.assign(document.createElement("span"), { textContent: text }))
+      );
+    };
+
+    const select = (index: number) => {
+      current = index;
+      panels.forEach((panel, i) => {
+        panel.hidden = i !== index;
+        buttons[i].setAttribute("aria-selected", String(i === index));
+        buttons[i].classList.toggle("selected", i === index);
+      });
+      const btn = buttons[index];
+      if (btn.offsetLeft < list.scrollLeft) {
+        list.scrollLeft = btn.offsetLeft;
+      } else if (btn.offsetLeft + btn.offsetWidth > list.scrollLeft + list.clientWidth) {
+        list.scrollLeft = btn.offsetLeft + btn.offsetWidth - list.clientWidth;
+      }
+      renderStatus();
+    };
+
+    document.addEventListener("selectionchange", () => {
+      const info = infos[current];
+      const caret = info.getCaret();
+      if (!caret) {
+        return;
+      }
+      panels[current]
+        .querySelectorAll(".is-active")
+        .forEach((el) => el.classList.remove("is-active"));
+      panels[current]
+        .querySelector(`.line[data-line="${caret.line}"]`)
+        ?.classList.add("is-active");
+      info.ln = caret.line;
+      info.col = caret.col;
+      renderStatus();
+    });
+
+    root.prepend(bar);
+    root.append(status);
+    root.classList.add("is-ready");
+    select(0);
+  };
+
+  document
+    .querySelectorAll<HTMLElement>("[data-code-tabs]")
+    .forEach(setup);
+</script>
+
+<style is:global>
+  .code-tabs {
+    --tabs-chrome: var(--code-bg);
+    --tabs-editor: var(--bg);
+    --tabs-border: var(--code-border);
+    --tabs-gutter: rgba(0, 0, 0, 0.025);
+    --tabs-active-line: rgba(0, 0, 0, 0.05);
+  }
+
+  [data-theme="dark"] .code-tabs {
+    --tabs-chrome: #131315;
+    --tabs-editor: #1d1d20;
+    --tabs-border: rgba(255, 255, 255, 0.12);
+    --tabs-gutter: rgba(255, 255, 255, 0.025);
+    --tabs-active-line: rgba(255, 255, 255, 0.06);
+  }
+
+  .code-tabs {
+    margin: var(--gap) 0;
+    border: 1px solid var(--tabs-border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--tabs-editor);
+
+    .code-tabs-bar {
+      display: flex;
+      align-items: stretch;
+      background: var(--tabs-chrome);
+      border-bottom: 1px solid var(--tabs-border);
+    }
+
+    .code-tabs-dots {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 14px;
+      border-right: 1px solid var(--tabs-border);
+
+      span {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--faded-line);
+      }
+    }
+
+    .code-tabs-list {
+      display: flex;
+      flex: 1;
+      min-width: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+
+      &::-webkit-scrollbar {
+        display: none;
+      }
+    }
+
+    .code-tabs-btn {
+      appearance: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 40px;
+      padding: 0 16px;
+      cursor: pointer;
+      white-space: nowrap;
+      color: var(--faded-text);
+      background: transparent;
+      border: none;
+      border-right: 1px solid var(--tabs-border);
+      border-radius: 0;
+      margin-bottom: -1px;
+
+      &:hover {
+        color: var(--text);
+      }
+
+      &.selected {
+        color: var(--text);
+        background: var(--tabs-editor);
+        border-bottom: 1px solid var(--tabs-editor);
+        box-shadow: inset 0 2px 0 var(--text);
+      }
+
+      svg {
+        width: 14px;
+        height: 14px;
+        flex: 0 0 14px;
+      }
+    }
+
+    .tab-label-short {
+      display: none;
+    }
+
+    @media (max-width: 640px) {
+      .code-tabs-dots {
+        display: none;
+      }
+
+      .code-tabs-list {
+        flex: 1 1 100%;
+      }
+
+      .code-tabs-btn {
+        flex: 1 1 auto;
+        justify-content: center;
+        gap: 6px;
+        padding: 0 10px;
+      }
+
+      .tab-label-full {
+        display: none;
+      }
+
+      .tab-label-short {
+        display: inline;
+      }
+    }
+
+    .code-tabs-status {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 4px 16px;
+      padding: 4px 14px;
+      font-size: var(--font-tiny);
+      color: var(--faded-text);
+      background: var(--tabs-chrome);
+      border-top: 1px solid var(--tabs-border);
+
+      > div {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0 16px;
+      }
+    }
+
+    .copy-code-wrapper pre {
+      background-image: linear-gradient(
+        to right,
+        var(--tabs-gutter) 0 68px,
+        var(--tabs-border) 68px 69px,
+        transparent 69px
+      );
+    }
+
+    .copy-code-wrapper pre code {
+      min-width: max-content;
+    }
+
+    .copy-code-wrapper pre code > .line {
+      padding: 0 var(--gap) 0 0;
+
+      &[hidden] {
+        display: none;
+      }
+
+      /* Sticky so text scrolls beneath the gutter instead of behind the numbers */
+      &::before {
+        content: attr(data-line);
+        position: sticky;
+        left: 0;
+        z-index: 1;
+        display: inline-block;
+        vertical-align: top;
+        box-sizing: border-box;
+        width: 68px;
+        margin-right: 14px;
+        padding-right: 32px;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        color: var(--faded-line);
+        background:
+          linear-gradient(var(--tabs-gutter), var(--tabs-gutter)),
+          var(--tabs-editor);
+        border-right: 1px solid var(--tabs-border);
+        user-select: none;
+      }
+
+      &:hover,
+      &.is-active {
+        background: var(--tabs-active-line);
+      }
+
+      &:hover::before {
+        color: var(--faded-text);
+      }
+
+      &.is-active::before {
+        color: var(--text);
+      }
+
+      &.is-folded::after {
+        content: "⋯ " attr(data-fold);
+        margin-left: 8px;
+        padding: 0 6px;
+        font-size: 11px;
+        color: var(--faded-text);
+        background: var(--tabs-active-line);
+        border-radius: 3px;
+        user-select: none;
+      }
+    }
+
+    .fold-toggle {
+      position: sticky;
+      left: 44px;
+      z-index: 2;
+      display: inline-flex;
+      vertical-align: top;
+      width: 14px;
+      height: 24px;
+      margin: 0 24px 0 -38px;
+      align-items: center;
+      justify-content: center;
+      color: var(--faded-text);
+      cursor: pointer;
+      opacity: 0;
+      user-select: none;
+
+      &::before {
+        content: "";
+        width: 5px;
+        height: 5px;
+        border-right: 1.5px solid currentColor;
+        border-bottom: 1.5px solid currentColor;
+        transform: rotate(45deg) translate(-1px, -1px);
+      }
+
+      &:hover {
+        color: var(--text);
+      }
+    }
+
+    .copy-code-wrapper:hover .fold-toggle,
+    .is-folded .fold-toggle {
+      opacity: 1;
+    }
+
+    .is-folded .fold-toggle::before {
+      transform: rotate(-45deg);
+    }
+
+    > .copy-code-wrapper {
+      border: none;
+      border-radius: 0;
+      background: var(--tabs-editor);
+
+      &[hidden] {
+        display: none;
+      }
+
+      .code-header {
+        position: absolute;
+        top: 6px;
+        right: 8px;
+        z-index: 1;
+        height: auto;
+        padding: 0;
+        background: transparent;
+        border: none;
+
+        .code-filename {
+          display: none;
+        }
+      }
+    }
+  }
+</style>
