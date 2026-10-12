@@ -73,9 +73,6 @@
     },
     "satori": {
       "fflate": "^0.7.5"
-    },
-    "@shuding/opentype.js": {
-      "fflate": "^0.7.5"
     }
   }
 }
