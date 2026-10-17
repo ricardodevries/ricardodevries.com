@@ -42,23 +42,29 @@
       if (indent < 0) {
         return;
       }
+
       let next = i + 1;
       while (next < lines.length && indents[next] < 0) {
         next++;
       }
+
       if (next >= lines.length || !isChild(next, i)) {
         return;
       }
+
       let end = next;
       for (let j = next + 1; j < lines.length; j++) {
         if (indents[j] < 0) {
           continue;
         }
+
         if (!isChild(j, i)) {
           break;
         }
+
         end = j;
       }
+
       if (end - i >= 2) {
         ends.set(i, end);
       }
@@ -72,6 +78,7 @@
         const isFolded = !hidden && folded.has(i);
         line.hidden = hidden;
         line.classList.toggle("is-folded", isFolded);
+
         if (isFolded) {
           const end = ends.get(i) as number;
           line.dataset.fold = `${end - i} lines`;
@@ -92,6 +99,7 @@
         } else {
           folded.add(i);
         }
+
         applyFolds();
       });
       lines[i].prepend(toggle);
@@ -108,17 +116,22 @@
       getCaret: () => {
         const selection = document.getSelection();
         const node = selection?.anchorNode;
+
         if (!selection || !node) {
           return null;
         }
+
         const el = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
         const lineEl = el?.closest<HTMLElement>(".line");
+
         if (!lineEl || !panel.contains(lineEl)) {
           return null;
         }
+
         const range = document.createRange();
         range.setStart(lineEl, 0);
         range.setEnd(node, selection.anchorOffset);
+
         return {
           line: Number(lineEl.dataset.line),
           col: range.toString().length + 1,
@@ -131,6 +144,7 @@
     if (root.classList.contains("is-ready")) {
       return;
     }
+
     const panels = Array.from(
       root.querySelectorAll<HTMLElement>(":scope > .copy-code-wrapper")
     );
@@ -155,9 +169,11 @@
       button.role = "tab";
       button.className = "code-tabs-btn mono small-text";
       const icon = panel.querySelector<SVGElement>(".code-filename svg");
+
       if (icon) {
         button.append(icon.cloneNode(true));
       }
+
       const full = document.createElement("span");
       full.className = "tab-label-full";
       full.textContent = label;
@@ -167,6 +183,7 @@
       button.append(full, short);
       button.addEventListener("click", () => select(i));
       list.append(button);
+
       return button;
     });
 
@@ -211,24 +228,30 @@
         buttons[i].classList.toggle("selected", i === index);
       });
       const btn = buttons[index];
+
       if (btn.offsetLeft < list.scrollLeft) {
         list.scrollLeft = btn.offsetLeft;
       } else if (btn.offsetLeft + btn.offsetWidth > list.scrollLeft + list.clientWidth) {
         list.scrollLeft = btn.offsetLeft + btn.offsetWidth - list.clientWidth;
       }
+
       renderStatus();
     };
 
     const onSelectionChange = () => {
       if (!root.isConnected) {
         document.removeEventListener("selectionchange", onSelectionChange);
+
         return;
       }
+
       const info = infos[current];
       const caret = info.getCaret();
+
       if (!caret) {
         return;
       }
+
       panels[current]
         .querySelectorAll(".is-active")
         .forEach((el) => el.classList.remove("is-active"));

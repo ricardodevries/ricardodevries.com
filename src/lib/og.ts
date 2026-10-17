@@ -1,7 +1,10 @@
-import satori, { type SatoriOptions } from "satori";
+import { createRequire } from "node:module";
+import type { SatoriOptions } from "satori";
 import { fontData } from "astro:assets";
 import { Resvg } from "@resvg/resvg-js";
 import ogTemplate from "./templates/og";
+
+const { default: satori } = createRequire(import.meta.url)("satori") as typeof import("satori");
 
 function svgBufferToPngBuffer(svg: string) {
   const resvg = new Resvg(svg);
