@@ -5,6 +5,7 @@ metaDescription: "Running Hermes Agent on Debian 13 with Docker"
 heroImage: "../../assets/images/alex-knight-2EJCSULRwC8-unsplash.jpg"
 imgCredits: { username: "agk42", url: "https://unsplash.com/@agk42" }
 pubDate: "2026-10-12"
+updatedDate: "2026-10-26"
 status: "published"
 ---
 
@@ -13,6 +14,12 @@ import ContentAside from "../../components/ContentAside.astro";
 import CodeTabs from "../../components/CodeTabs.astro";
 import signalScreenshot from "../../assets/images/hermes-agent-signal-light.jpg";
 import signalScreenshotDark from "../../assets/images/hermes-agent-signal-dark.jpg";
+
+<Note>
+
+**Update (26 October):** I misread the Hermes docs, as usual with documentation. The setting is `web.backend: searxng`, not `web.search_backend: searxng`. The old key isn't invalid, but it only covers searching, so you end up without `web_extract`. Hermes did still use SearXNG, but only by improvising with `curl`, which timed out or returned weird results. I've fixed the config below and added the official `searxng-search` skill.
+
+</Note>
 
 Whenever documentation tells me to install something with a shell script, my first thought is _Could I just containerize this instead?_ So I tried it with Hermes Agent. Docker is officially supported, but I wanted to see whether the setup would meet my standards and satisfy my autisticness.
 
@@ -286,10 +293,16 @@ Set the search backend in `~/.hermes/config.yaml`:
 
 ```yaml
 web:
-  search_backend: searxng
+  backend: searxng
 
 browser:
   cloud_provider: local
+```
+
+Hermes also needs the [searxng-search](https://github.com/NousResearch/hermes-agent/blob/main/optional-skills/research/searxng-search/SKILL.md) skill to know how to talk to SearXNG. I disabled the bundled skills, so I install this one by hand:
+
+```sh
+docker compose run --rm hermes skills install official/research/searxng-search
 ```
 
 Don't forget to add the search instructions to the system prompt in `~/.hermes/config.yaml`. Yes, including the line telling it not to fabricate sources. Apparently that needs saying:
@@ -861,7 +874,7 @@ telemetry:
     offer_version: 2
 
 web:
-  search_backend: searxng
+  backend: searxng
 
 browser:
   cloud_provider: local
