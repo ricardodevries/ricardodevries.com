@@ -65,7 +65,7 @@
     "sass": "^1.105.1",
     "svelte": "^5.57.2",
     "typescript-eslint": "^8.71.2",
-    "unist-util-visit": "^5.1.0"
+    "unist-util-visit": "^5.2.0"
   },
   "overrides": {
     "@esbuild-kit/core-utils": {
