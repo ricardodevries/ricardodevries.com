@@ -18,7 +18,7 @@
     "@astrojs/mdx": "^8.1.0",
     "@astrojs/node": "^11.1.7",
     "@astrojs/rss": "^4.0.19",
-    "@astrojs/svelte": "^9.1.0",
+    "@astrojs/svelte": "^9.1.1",
     "@better-auth/drizzle-adapter": "^1.7.7",
     "@dev.icons/core": "^1.1.0",
     "@libsql/client": "^0.18.0",
