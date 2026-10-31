@@ -36,9 +36,14 @@ export default defineConfig({
     mermaid({
       enableLog: false,
       mermaidConfig: {
+        layout: "dagre",
+        theme: "default",
+        look: "classic",
         fontFamily: "var(--font-ibm-plex-sans), sans-serif",
         themeVariables: { fontSize: "18px" },
         flowchart: {
+          wrappingWidth: 200,
+          minNodeWidth: 0,
           curve: "rounded",
           nodeSpacing: 32,
           rankSpacing: 48,
